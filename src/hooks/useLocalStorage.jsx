@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Custom hook to persist component state in localStorage
@@ -7,6 +7,12 @@ import { useState, useEffect } from 'react';
  * @returns {Array} - [storedValue, setStoredValue]
  */
 function useLocalStorage(key, initialValue) {
+  // Ref to track if this is the first render
+  const isFirstRender = useRef(true);
+  
+  // Track if we're currently setting a value to prevent update loops
+  const isSettingValue = useRef(false);
+  
   // State to store our value
   const [storedValue, setStoredValue] = useState(() => {
     try {
@@ -14,10 +20,13 @@ function useLocalStorage(key, initialValue) {
       const item = window.localStorage.getItem(key);
       
       // Parse stored json or if none return initialValue
-      console.log(`Checking localStorage for key: ${key}`);
-      const parsedItem = item ? JSON.parse(item) : initialValue;
-      console.log(`Found data:`, parsedItem);
-      return parsedItem;
+      if (isFirstRender.current) {
+        console.log(`Initializing localStorage for key: ${key}`);
+        isFirstRender.current = false;
+        const parsedItem = item ? JSON.parse(item) : initialValue;
+        return parsedItem;
+      }
+      return item ? JSON.parse(item) : initialValue;
     } catch (error) {
       // If error, return initialValue
       console.error(`Error reading localStorage key "${key}":`, error);
@@ -29,6 +38,11 @@ function useLocalStorage(key, initialValue) {
   // persists the new value to localStorage
   const setValue = (value) => {
     try {
+      // Prevent update loops
+      if (isSettingValue.current) return;
+      
+      isSettingValue.current = true;
+      
       // Allow value to be a function so we have same API as useState
       const valueToStore =
         value instanceof Function ? value(storedValue) : value;
@@ -37,11 +51,17 @@ function useLocalStorage(key, initialValue) {
       setStoredValue(valueToStore);
       
       // Save to local storage
-      console.log(`Saving to localStorage key "${key}":`, valueToStore);
+      console.log(`Saving to localStorage key "${key}"`);
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      
+      // Reset the setting flag after a small delay
+      setTimeout(() => {
+        isSettingValue.current = false;
+      }, 50);
     } catch (error) {
       // A more advanced implementation would handle the error case
       console.error(`Error saving to localStorage key "${key}":`, error);
+      isSettingValue.current = false;
     }
   };
 

@@ -123,6 +123,7 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
+    max-width: 90%;
   }
   
   .expense-cost-wrapper {
@@ -133,8 +134,9 @@
   
   .currency-symbol {
     position: absolute;
-    left: 8px;
+    left: -15px;
     color: #666;
+    
   }
   
   .expense-cost {

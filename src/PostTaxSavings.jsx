@@ -75,7 +75,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
   // State for accounts and total contributions
   const [accounts, setAccounts] = useState(() => initializeAccounts());
   const [totalContributions, setTotalContributions] = useState(0);
-  const [payAmount, setPayAmount] = useState(paycheck || 0);
+  const [payAmount, setPayAmount] = useState(paycheck.netPay || 0);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Update accounts if acctBalanceData changes

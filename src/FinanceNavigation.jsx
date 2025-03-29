@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PayStub from './PayStub';
 import AccountBalanceForm from './AccountBalanceForm';
 import DebtTrackerForm from './DebtTrackerForm';
@@ -11,7 +11,7 @@ import './FinanceNavigation.css';
 import useLocalStorage from './hooks/useLocalStorage';
 
 const FinanceNavigation = () => {
-  // State for all the financial data
+  // State for all the financial data with useLocalStorage integration
   const [payStubData, setPayStubData] = useLocalStorage('finance_paystub_data', []);
   const [showAddSpouse, setShowAddSpouse] = useLocalStorage('finance_show_spouse', false);
   const [showAddJob, setShowAddJob] = useLocalStorage('finance_show_job', false);
@@ -31,146 +31,195 @@ const FinanceNavigation = () => {
   const [currentStep, setCurrentStep] = useLocalStorage('finance_current_step', 0);
   const [progress, setProgress] = useState(0);
 
-  // Add debug logs to verify data is being saved/loaded
-  useEffect(() => {
-    console.log('Current localStorage state:');
-    console.log('Pay stub data:', payStubData);
-    console.log('Account balance data:', acctBalanceData);
-    console.log('Debt list:', debtList);
-    console.log('Housing expenses:', housingExpenses);
-    console.log('Transport expenses:', transportExpenses);
-    console.log('Personal expenses:', personalExpenses);
-    console.log('Recurring expenses:', recurringExpenses);
-    console.log('Post-tax contributions:', postTaxContributions);
-  }, [
-    payStubData, acctBalanceData, debtList, housingExpenses, 
-    transportExpenses, personalExpenses, recurringExpenses, postTaxContributions
-  ]);
+  // Prevent multiple updates
+  const updateInProgress = React.useRef(false);
 
-  // Wrapper functions to ensure data is properly saved/loaded
-  const handlePayStubDataUpdate = (newData) => {
-    console.log('Updating pay stub data:', newData);
+  // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
+  const handlePayStubDataUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating pay stub data');
     setPayStubData(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setPayStubData]);
 
-  const handleAcctBalanceUpdate = (newData) => {
-    console.log('Updating account balance data:', newData);
+  const handleAcctBalanceUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating account balance data');
     setAcctBalanceData(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setAcctBalanceData]);
 
-  const handleDebtListUpdate = (newData) => {
-    console.log('Updating debt list:', newData);
+  const handleDebtListUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating debt list');
     setDebtList(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setDebtList]);
 
-  const handleHousingExpensesUpdate = (newData) => {
-    console.log('Updating housing expenses:', newData);
+  const handleHousingExpensesUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating housing expenses');
     setHousingExpenses(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setHousingExpenses]);
 
-  const handleTransportExpensesUpdate = (newData) => {
-    console.log('Updating transport expenses:', newData);
+  const handleTransportExpensesUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating transport expenses');
     setTransportExpenses(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setTransportExpenses]);
 
-  const handlePersonalExpensesUpdate = (newData) => {
-    console.log('Updating personal expenses:', newData);
+  const handlePersonalExpensesUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating personal expenses');
     setPersonalExpenses(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setPersonalExpenses]);
 
-  const handleRecurringExpensesUpdate = (newData) => {
-    console.log('Updating recurring expenses:', newData);
+  const handleRecurringExpensesUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating recurring expenses');
     setRecurringExpenses(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setRecurringExpenses]);
 
-  const handlePostTaxContributionsUpdate = (newData) => {
-    console.log('Updating post-tax contributions:', newData);
+  const handlePostTaxContributionsUpdate = useCallback((newData) => {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    
+    console.log('Updating post-tax contributions');
     setPostTaxContributions(newData);
-  };
+    
+    setTimeout(() => {
+      updateInProgress.current = false;
+    }, 100);
+  }, [setPostTaxContributions]);
+
+  // Memoize the welcome screen component to prevent unnecessary re-renders
+  const welcomeScreenComponent = useMemo(() => (
+    <div className="welcome-screen">
+      <h1>Personal Finance Questionnaire</h1>
+      <p>This questionnaire will help you understand your financial situation better by walking you through several key areas:</p>
+      <ul>
+        <li>Income and Paystubs</li>
+        <li>Account Balances</li>
+        <li>Debt Tracking</li>
+        <li>Housing Expenses</li>
+        <li>Transportation Costs</li>
+        <li>Personal Expenses</li>
+        <li>Recurring Bills</li>
+        <li>Savings Contributions</li>
+      </ul>
+      <p>Each section builds on the previous one to create a comprehensive financial overview.</p>
+      <p><strong>Your progress will be automatically saved</strong> as you move through the questionnaire.</p>
+    </div>
+  ), []);
+
+  // Memoize income component to prevent unnecessary re-renders
+  const incomeComponent = useMemo(() => (
+    <div className="step-container">
+      <h2>Income Information</h2>
+      <PayStub 
+        id="primary" 
+        label="Primary Pay Stub" 
+        setPayStubData={handlePayStubDataUpdate}
+        initialData={payStubData.find(stub => stub.id === "primary")} 
+      />
+      
+      {showAddSpouse && (
+        <div className="additional-paystub">
+          <h3>Spouse Pay Stub</h3>
+          <PayStub 
+            id="spouse" 
+            label="Spouse Pay Stub" 
+            setPayStubData={handlePayStubDataUpdate}
+            initialData={payStubData.find(stub => stub.id === "spouse")}
+          />
+        </div>
+      )}
+      
+      {showAddJob && (
+        <div className="additional-paystub">
+          <h3>Secondary Job</h3>
+          <PayStub 
+            id="secondary-job" 
+            label="Secondary Job" 
+            setPayStubData={handlePayStubDataUpdate}
+            initialData={payStubData.find(stub => stub.id === "secondary-job")}
+          />
+        </div>
+      )}
+      
+      <div className="add-buttons">
+        {!showAddSpouse && (
+          <button onClick={() => setShowAddSpouse(true)}>Add Spouse Pay Stub</button>
+        )}
+        
+        {!showAddJob && (
+          <button onClick={() => setShowAddJob(true)}>Add Secondary Job</button>
+        )}
+      </div>
+      
+      {payStubData.length > 0 && (
+        <div className="data-summary">
+          <h3>Pay Summary</h3>
+          <div className="total-summary">
+            <p>Total Net Pay: ${summary.totalNetPay.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  ), [payStubData, summary, showAddSpouse, showAddJob, handlePayStubDataUpdate, setShowAddSpouse, setShowAddJob]);
 
   // Define the steps/components to navigate through
-  const steps = [
+  const steps = useMemo(() => [
     {
       id: 'welcome',
       title: 'Welcome',
       description: 'Complete this questionnaire to get a clear picture of your financial situation',
-      component: (
-        <div className="welcome-screen">
-          <h1>Personal Finance Questionnaire</h1>
-          <p>This questionnaire will help you understand your financial situation better by walking you through several key areas:</p>
-          <ul>
-            <li>Income and Paystubs</li>
-            <li>Account Balances</li>
-            <li>Debt Tracking</li>
-            <li>Housing Expenses</li>
-            <li>Transportation Costs</li>
-            <li>Personal Expenses</li>
-            <li>Recurring Bills</li>
-            <li>Savings Contributions</li>
-          </ul>
-          <p>Each section builds on the previous one to create a comprehensive financial overview.</p>
-          <p><strong>Your progress will be automatically saved</strong> as you move through the questionnaire.</p>
-        </div>
-      )
+      component: welcomeScreenComponent
     },
     {
       id: 'income',
       title: 'Income',
       description: 'Enter your income details from your pay stub',
-      component: (
-        <div className="step-container">
-          <h2>Income Information</h2>
-          <PayStub 
-            id="primary" 
-            label="Primary Pay Stub" 
-            setPayStubData={handlePayStubDataUpdate}
-            initialData={payStubData.find(stub => stub.id === "primary")} 
-          />
-          
-          {showAddSpouse && (
-            <div className="additional-paystub">
-              <h3>Spouse Pay Stub</h3>
-              <PayStub 
-                id="spouse" 
-                label="Spouse Pay Stub" 
-                setPayStubData={handlePayStubDataUpdate}
-                initialData={payStubData.find(stub => stub.id === "spouse")}
-              />
-            </div>
-          )}
-          
-          {showAddJob && (
-            <div className="additional-paystub">
-              <h3>Secondary Job</h3>
-              <PayStub 
-                id="secondary-job" 
-                label="Secondary Job" 
-                setPayStubData={handlePayStubDataUpdate}
-                initialData={payStubData.find(stub => stub.id === "secondary-job")}
-              />
-            </div>
-          )}
-          
-          <div className="add-buttons">
-            {!showAddSpouse && (
-              <button onClick={() => setShowAddSpouse(true)}>Add Spouse Pay Stub</button>
-            )}
-            
-            {!showAddJob && (
-              <button onClick={() => setShowAddJob(true)}>Add Secondary Job</button>
-            )}
-          </div>
-          
-          {payStubData.length > 0 && (
-            <div className="data-summary">
-              <h3>Pay Summary</h3>
-              <div className="total-summary">
-                <p>Total Net Pay: ${summary.totalNetPay.toFixed(2)}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )
+      component: incomeComponent
     },
     {
       id: 'accounts',
@@ -249,8 +298,62 @@ const FinanceNavigation = () => {
           
           <div className="summary-section">
             <h3>Income</h3>
-            <p>Total Net Pay: ${summary.totalNetPay.toFixed(2)}</p>
-            <p>Pre-Tax Savings: ${summary.preTaxSavings.toFixed(2)}</p>
+            {payStubData && payStubData.length > 0 && payStubData[0].netPay > 0 && (
+  <div className="pay-breakdown-section">
+    <h4>Pay Breakdown</h4>
+    {(() => {
+      const primaryPayStub = payStubData[0];
+      const netPay = primaryPayStub.netPay;
+      let weeklyPay, biWeeklyPay, monthlyPay, annualPay;
+      
+      switch(primaryPayStub.payInterval) {
+        case 'weekly':
+          weeklyPay = netPay;
+          biWeeklyPay = netPay * 2;
+          monthlyPay = netPay * 4.33; // Average weeks in a month
+          annualPay = netPay * 52;
+          break;
+        case 'bi-weekly':
+          weeklyPay = netPay / 2;
+          biWeeklyPay = netPay;
+          monthlyPay = netPay * 2.17; // Average bi-weekly periods in a month
+          annualPay = netPay * 26;
+          break;
+        case 'monthly':
+          weeklyPay = netPay / 4.33;
+          biWeeklyPay = netPay / 2.165;
+          monthlyPay = netPay;
+          annualPay = netPay * 12;
+          break;
+        default:
+          return null;
+      }
+      
+      return (
+        <div className="pay-equivalents">
+          <div className="pay-row">
+            <span>Weekly Net Pay:</span>
+            <span className="pay-amount">${weeklyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div className="pay-row">
+            <span>Bi-Weekly Net Pay:</span>
+            <span className="pay-amount">${biWeeklyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div className="pay-row">
+            <span>Monthly Net Pay:</span>
+            <span className="pay-amount">${monthlyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div className="pay-row">
+            <span>Annual Net Pay:</span>
+            <span className="pay-amount">${annualPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          
+          
+        </div>
+      );
+    })()}
+  </div>
+)}
           </div>
           
           {acctBalanceData && (
@@ -268,46 +371,102 @@ const FinanceNavigation = () => {
           )}
           
           {debtList && debtList.length > 0 && (
-            <div className="summary-section">
-              <h3>Debts</h3>
-              <p>Total Debt: ${debtList.reduce((sum, debt) => sum + debt.balance, 0).toFixed(2)}</p>
-              <p>Total Minimum Monthly Payment: ${debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0).toFixed(2)}</p>
-            </div>
-          )}
-          
-          {housingExpenses && (
-            <div className="summary-section">
-              <h3>Housing</h3>
-              <p>Monthly Housing Expenses: ${housingExpenses.totalMonthlyExpenses?.toFixed(2) || '0.00'}</p>
-            </div>
-          )}
-          
-          {transportExpenses && (
-            <div className="summary-section">
-              <h3>Transportation</h3>
-              <p>Monthly Transportation Expenses: ${transportExpenses.totalMonthlyExpenses?.toFixed(2) || '0.00'}</p>
-            </div>
-          )}
-          
-          {personalExpenses && postTaxContributions && (
-            <div className="summary-section">
-              <h3>Monthly Cash Flow</h3>
-              <p>Income: ${summary.totalNetPay.toFixed(2)}</p>
-              <p>Housing: -${housingExpenses?.totalMonthlyExpenses?.toFixed(2) || '0.00'}</p>
-              <p>Transportation: -${transportExpenses?.totalMonthlyExpenses?.toFixed(2) || '0.00'}</p>
-              <p>Debt Payments: -${debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0).toFixed(2) : '0.00'}</p>
-              <p>Savings Contributions: -${postTaxContributions?.total_contributions?.toFixed(2) || '0.00'}</p>
-              <p className="remaining">
-                Remaining: ${(
-                  summary.totalNetPay -
-                  (housingExpenses?.totalMonthlyExpenses || 0) -
-                  (transportExpenses?.totalMonthlyExpenses || 0) -
-                  (debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0) -
-                  (postTaxContributions?.total_contributions || 0)
-                ).toFixed(2)}
-              </p>
-            </div>
-          )}
+  <div className="summary-section">
+    <h3>Debts</h3>
+    <p>
+      <span>Total Debt:</span> 
+      <span>${debtList.reduce((sum, debt) => sum + debt.balance, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Total Minimum Monthly Payment:</span> 
+      <span>${debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  </div>
+)}
+
+{housingExpenses && (
+  <div className="summary-section">
+    <h3>Housing</h3>
+    <p>
+      <span>Monthly Housing Expenses:</span>
+      <span>${(housingExpenses.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Annual Housing Expenses:</span>
+      <span>${((housingExpenses.totalMonthlyExpenses || 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  </div>
+)}
+
+{transportExpenses && (
+  <div className="summary-section">
+    <h3>Transportation</h3>
+    <p>
+      <span>Monthly Transportation Expenses:</span>
+      <span>${(transportExpenses.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  </div>
+)}
+
+{recurringExpenses && recurringExpenses.expenses && (
+  <div className="summary-section">
+    <h3>Recurring Expenses</h3>
+    {recurringExpenses.expenses.map((item, index) => (
+      <p key={index}>
+        <span>{item.name} ({item.frequency}):</span>
+        <span>${item.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      </p>
+    ))}
+    <p>
+      <span>Monthly Equivalent:</span>
+      <span>${(recurringExpenses.summary?.monthlyTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Annual Equivalent:</span>
+      <span>${(recurringExpenses.summary?.annualTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Total Services:</span>
+      <span>{recurringExpenses.summary?.count || 0}</span>
+    </p>
+  </div>
+)}
+
+{personalExpenses && postTaxContributions && (
+  <div className="summary-section">
+    <h3>Monthly Cash Flow</h3>
+    <p>
+      <span>Income:</span>
+      <span>${summary.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Housing:</span>
+      <span>-${(housingExpenses?.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Transportation:</span>
+      <span>-${(transportExpenses?.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Debt Payments:</span>
+      <span>-${(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Savings Contributions:</span>
+      <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p className="remaining">
+      <span>Remaining:</span>
+      <span>${(
+        summary.totalNetPay -
+        (housingExpenses?.totalMonthlyExpenses || 0) -
+        (transportExpenses?.totalMonthlyExpenses || 0) -
+        (debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0) -
+        (postTaxContributions?.total_contributions || 0)
+      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  </div>
+)}
           
           <div className="final-message">
             <h3>Congratulations!</h3>
@@ -317,46 +476,73 @@ const FinanceNavigation = () => {
         </div>
       )
     }
-  ];
+  ], [
+    welcomeScreenComponent, 
+    incomeComponent,
+    acctBalanceData, 
+    debtList, 
+    housingExpenses, 
+    transportExpenses, 
+    personalExpenses,
+    recurringExpenses,
+    postTaxContributions,
+    payStubData,
+    summary,
+    handleAcctBalanceUpdate,
+    handleDebtListUpdate,
+    handleHousingExpensesUpdate,
+    handleTransportExpensesUpdate,
+    handlePersonalExpensesUpdate,
+    handleRecurringExpensesUpdate,
+    handlePostTaxContributionsUpdate
+  ]);
 
-  // Calculate progress percentage
-  React.useEffect(() => {
+  // Calculate progress percentage - only updates when currentStep changes
+  useEffect(() => {
     const progressPercentage = (currentStep / (steps.length - 1)) * 100;
     setProgress(progressPercentage);
-    
-    // Update summary from payStubData when it changes
-    if (payStubData.length > 0) {
+  }, [currentStep, steps.length]);
+  
+  // Update summary from payStubData when it changes
+  useEffect(() => {
+    if (payStubData.length > 0 && !updateInProgress.current) {
+      updateInProgress.current = true;
+      
       const totalNetPay = payStubData.reduce((sum, stub) => sum + (stub.netPay || 0), 0);
       const preTaxSavings = payStubData.reduce((sum, stub) => 
         sum + (stub.retirement401k || 0) + (stub.hsa || 0), 0);
       
       setSummary({ totalNetPay, preTaxSavings });
+      
+      setTimeout(() => {
+        updateInProgress.current = false;
+      }, 100);
     }
-  }, [currentStep, payStubData, setSummary]);
+  }, [payStubData, setSummary]);
 
   // Navigate to next step
-  const nextStep = () => {
+  const nextStep = useCallback(() => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     }
-  };
+  }, [currentStep, steps.length, setCurrentStep]);
 
   // Navigate to previous step
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
       window.scrollTo(0, 0);
     }
-  };
+  }, [currentStep, setCurrentStep]);
 
   // Jump to a specific step
-  const goToStep = (index) => {
+  const goToStep = useCallback((index) => {
     if (index >= 0 && index < steps.length) {
       setCurrentStep(index);
       window.scrollTo(0, 0);
     }
-  };
+  }, [steps.length, setCurrentStep]);
 
   return (
     <div className="finance-navigation">

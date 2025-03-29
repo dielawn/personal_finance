@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './PayStub.css';
 import { formatCurrency } from './utils';
 
@@ -31,6 +31,7 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
   // Local state for form data
   const [formData, setFormData] = useState(defaultFormData);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // State for calculations
   const [calculations, setCalculations] = useState({
@@ -40,13 +41,15 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
     totalDeductions: 0,
     netPay: 0
   });
+  
+  // Flag to prevent update loops
+  const isUpdatingParent = useRef(false);
 
-  // Initialize from initialData if available
+  // Initialize from initialData only once
   useEffect(() => {
     console.log(`Initializing PayStub ${id} with:`, initialData);
     
-    if (!initialData) {
-      console.log(`No initialData available for PayStub ${id}, using defaults`);
+    if (!initialData || isInitialized) {
       return;
     }
     
@@ -73,10 +76,14 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
     } catch (error) {
       console.error(`Error initializing PayStub ${id} from initialData:`, error);
     }
-  }, [id, initialData]);
+  }, [id, initialData, isInitialized]);
 
   // Calculate values when form data changes
   useEffect(() => {
+    if (isUpdatingParent.current) {
+      return; // Skip this update if we're in the middle of updating the parent
+    }
+    
     console.log('Calculating pay values...');
     
     const regularPay = formData.regularHours * formData.regularRate;
@@ -106,9 +113,12 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
     };
     
     setCalculations(newCalculations);
+    console.log('Updated calculations:', newCalculations);
     
-    // Update the parent component with both form data and calculations
-    if (setPayStubData && isInitialized) {
+    // Only update parent when explicitly submitting, not during typing
+    if (isSubmitting && setPayStubData) {
+      isUpdatingParent.current = true;
+      
       setPayStubData(prevData => {
         // Initialize as empty array if it's null
         const currentData = Array.isArray(prevData) ? [...prevData] : [];
@@ -133,14 +143,19 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
         
         return currentData;
       });
+      
+      // Reset the submitting flag after update
+      setIsSubmitting(false);
+      
+      // Reset the updating flag after a short delay
+      setTimeout(() => {
+        isUpdatingParent.current = false;
+      }, 100);
     }
-    
-    console.log('Updated calculations:', newCalculations);
-  }, [formData, setPayStubData, id, label, isInitialized]);
+  }, [formData, setPayStubData, id, label, isSubmitting]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    console.log(`Updating ${name} to ${value}`);
     
     // Convert numbers to float for calculation fields
     const numericFields = [
@@ -152,14 +167,12 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
     
     const newValue = numericFields.includes(name) ? parseFloat(value) || 0 : value;
     
-    setFormData({
-      ...formData,
+    setFormData(prevData => ({
+      ...prevData,
       [name]: newValue
-    });
+    }));
     
-    if (!isInitialized) {
-      setIsInitialized(true);
-    }
+    console.log(`Updated ${name} to ${newValue}`);
   };
 
   // Get pay interval text for display
@@ -176,38 +189,10 @@ const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
     }
   };
 
+  // Handle explicit submit action - this won't cause update loops
   const handleSubmit = () => {
-    console.log('Pay stub form submitted');
-    
-    // Update the parent component with both form data and calculations
-    if (setPayStubData) {
-      setPayStubData(prevData => {
-        // Initialize as empty array if it's null
-        const currentData = Array.isArray(prevData) ? [...prevData] : [];
-        
-        // Find if this pay stub already exists in the array
-        const existingIndex = currentData.findIndex(item => item.id === id);
-        
-        // Create the updated pay stub object
-        const updatedPayStub = {
-          id,
-          label,
-          ...formData,
-          ...calculations
-        };
-        
-        // Either update existing or add new
-        if (existingIndex >= 0) {
-          currentData[existingIndex] = updatedPayStub;
-        } else {
-          currentData.push(updatedPayStub);
-        }
-        
-        return currentData;
-      });
-    }
-    
-    console.log('Submitted pay stub data:', { ...formData, ...calculations });
+    console.log('Pay stub form explicitly submitted');
+    setIsSubmitting(true);
   };
 
   return (
