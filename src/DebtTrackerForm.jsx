@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './DebtTrackerForm.css';
 
-const DebtTrackerForm = ({ setAcctBalanceData }) => {
+const DebtTrackerForm = ({ setAcctBalanceData, initialData }) => {
   // State for a single debt entry form
   const [debtEntry, setDebtEntry] = useState({
     accountName: '',
@@ -12,6 +12,15 @@ const DebtTrackerForm = ({ setAcctBalanceData }) => {
 
   // State for storing all debt entries
   const [debtList, setDebtList] = useState([]);
+  
+  // Initialize from initialData if available
+  useEffect(() => {
+    console.log('Initializing DebtTrackerForm with:', initialData);
+    if (initialData && Array.isArray(initialData) && initialData.length > 0) {
+      console.log('Setting debt list from initialData');
+      setDebtList(initialData);
+    }
+  }, [initialData]);
 
   // Handle debt entry form changes
   const handleDebtEntryChange = (e) => {
@@ -95,13 +104,7 @@ const DebtTrackerForm = ({ setAcctBalanceData }) => {
     const totalMinPayment = calculateTotalMinPayment(updatedDebtList);
     
     // Update parent state with debt information
-    setAcctBalanceData(prevData => ({
-      ...prevData,
-      totalDebt,
-      totalMinPayment,
-      debtList: updatedDebtList,
-      netWorth: (prevData?.totalAssets || 0) - totalDebt
-    }));
+    setAcctBalanceData(updatedDebtList);
     
     console.log('Updated parent state with new debt data');
   };

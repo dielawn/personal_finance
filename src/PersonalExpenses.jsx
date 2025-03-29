@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './PersonalExpenses.css';
 
-const PersonalExpenses = ({ setPersonalExpenses }) => {
+const PersonalExpenses = ({ setPersonalExpenses, initialData }) => {
   const [expenses, setExpenses] = useState({
     groceries: '',
     diningOut: '',
@@ -14,6 +14,55 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
   // Add state to track if form has been submitted
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Initialize from initialData if available
+  useEffect(() => {
+    console.log('Initializing PersonalExpenses with:', initialData);
+    
+    if (!initialData) {
+      console.log('No initialData available, using defaults');
+      return;
+    }
+    
+    try {
+      // Set standard expenses
+      const updatedExpenses = { ...expenses };
+      let hasUpdates = false;
+      
+      // Check for standard expense fields
+      ['groceries', 'diningOut', 'clothing', 'entertainment'].forEach(field => {
+        if (initialData[field] !== undefined) {
+          console.log(`Setting ${field} to:`, initialData[field]);
+          updatedExpenses[field] = initialData[field].toString();
+          hasUpdates = true;
+        }
+      });
+      
+      if (hasUpdates) {
+        setExpenses(updatedExpenses);
+      }
+      
+      // Check for custom expenses
+      if (initialData.customExpenses && Array.isArray(initialData.customExpenses)) {
+        console.log('Setting custom expenses:', initialData.customExpenses);
+        
+        // Map to our format with IDs
+        const customExpensesWithIds = initialData.customExpenses.map(expense => ({
+          id: Date.now() + Math.random(), // Generate unique ID
+          name: expense.name,
+          amount: expense.amount.toString()
+        }));
+        
+        setCustomExpenses(customExpensesWithIds);
+      }
+      
+      // Mark as submitted if we loaded initialData
+      setIsSubmitted(true);
+      
+    } catch (error) {
+      console.error('Error initializing from initialData:', error);
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

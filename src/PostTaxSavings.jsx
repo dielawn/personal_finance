@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './PostTaxSavings.css';
 
-const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData }) => {
+const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData, initialData }) => {
   // Default account types if no acctBalanceData is provided
-  const defaultAccounts = [
+  const defaultAccountTypes = [
     { id: 'savingsAcct', name: 'Savings Account', amount: 0, percentage: 0, enabled: false, isPercentage: false },
     { id: 'iraAcct', name: 'IRA', amount: 0, percentage: 0, enabled: false, isPercentage: false }
   ];
@@ -14,7 +14,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     
     if (!acctBalanceData) {
       console.log('No acctBalanceData available, using defaults');
-      return defaultAccounts;
+      return defaultAccountTypes;
     }
     
     // Define pre-tax accounts to filter out
@@ -69,13 +69,14 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     }
     
     console.log('No account properties found, using defaults');
-    return defaultAccounts;
+    return defaultAccountTypes;
   };
 
   // State for accounts and total contributions
   const [accounts, setAccounts] = useState(() => initializeAccounts());
   const [totalContributions, setTotalContributions] = useState(0);
   const [payAmount, setPayAmount] = useState(paycheck || 0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Update accounts if acctBalanceData changes
   useEffect(() => {
@@ -84,6 +85,63 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     console.log('New accounts after reinitialization:', newAccounts);
     setAccounts(newAccounts);
   }, [acctBalanceData]);
+
+  // Initialize from initialData if available
+  useEffect(() => {
+    console.log('Initializing PostTaxSavings with:', initialData);
+    
+    if (!initialData) {
+      console.log('No initialData available, using defaults');
+      return;
+    }
+    
+    try {
+      // Set pay amount if provided
+      if (payAmount === 0 && paycheck > 0) {
+        console.log(`Setting payAmount to paycheck value: ${paycheck}`);
+        setPayAmount(paycheck);
+      }
+      
+      // Apply saved account settings
+      if (initialData.accounts && Array.isArray(initialData.accounts)) {
+        console.log('Initializing accounts from initialData:', initialData.accounts);
+        
+        const updatedAccounts = [...accounts];
+        let hasUpdates = false;
+        
+        // Update each account from saved data
+        initialData.accounts.forEach(savedAccount => {
+          const accountIndex = updatedAccounts.findIndex(acc => acc.id === savedAccount.id);
+          
+          if (accountIndex >= 0) {
+            console.log(`Updating account ${savedAccount.id} with saved settings`);
+            
+            updatedAccounts[accountIndex] = {
+              ...updatedAccounts[accountIndex],
+              enabled: true,
+              isPercentage: savedAccount.isPercentage || false,
+              amount: savedAccount.isPercentage ? 0 : (savedAccount.amount || 0),
+              percentage: savedAccount.isPercentage ? (savedAccount.percentage || 0) : 0
+            };
+            
+            hasUpdates = true;
+          } else {
+            console.log(`Account ${savedAccount.id} not found in current accounts list`);
+            // Could add missing accounts here if needed
+          }
+        });
+        
+        if (hasUpdates) {
+          console.log('Setting updated accounts:', updatedAccounts);
+          setAccounts(updatedAccounts);
+          setIsInitialized(true);
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error initializing from initialData:', error);
+    }
+  }, [initialData, accounts, paycheck, payAmount]);
 
   // Calculate actual contribution amount for an account
   const calculateContribution = (account) => {
@@ -105,21 +163,24 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     
     setTotalContributions(total);
     
-    // Create data object for parent component
-    const contributionsData = {
-      accounts: accounts.filter(account => account.enabled).map(account => {
-        const actualAmount = calculateContribution(account);
-        return {
-          ...account,
-          calculatedAmount: actualAmount
-        };
-      }),
-      total_contributions: total
-    };
-    
-    console.log('Post-tax contributions updated:', contributionsData);
-    setPostTaxContributions(contributionsData);
-  }, [accounts, payAmount, setPostTaxContributions]);
+    // Only update parent component if initialization is complete
+    if (isInitialized) {
+      // Create data object for parent component
+      const contributionsData = {
+        accounts: accounts.filter(account => account.enabled).map(account => {
+          const actualAmount = calculateContribution(account);
+          return {
+            ...account,
+            calculatedAmount: actualAmount
+          };
+        }),
+        total_contributions: total
+      };
+      
+      console.log('Post-tax contributions updated:', contributionsData);
+      setPostTaxContributions(contributionsData);
+    }
+  }, [accounts, payAmount, setPostTaxContributions, isInitialized]);
 
   // Handle account toggle
   const handleToggleAccount = (id) => {
@@ -127,6 +188,10 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
       account.id === id ? { ...account, enabled: !account.enabled } : account
     ));
     console.log(`Toggled account ${id}`);
+    
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
   };
 
   // Handle amount change
@@ -147,6 +212,10 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
         return { ...account, amount: sanitizedValue };
       }
     }));
+    
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
   };
   
   // Handle contribution type toggle (dollar or percentage)
@@ -161,6 +230,10 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
         isPercentage: newIsPercentage 
       };
     }));
+    
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
   };
   
   // Handle paycheck amount change
@@ -168,6 +241,10 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     const sanitizedAmount = Math.max(0, Number(amount) || 0);
     setPayAmount(sanitizedAmount);
     console.log('Paycheck amount updated:', sanitizedAmount);
+    
+    if (!isInitialized) {
+      setIsInitialized(true);
+    }
   };
 
   const handleSubmit = () => {
@@ -291,7 +368,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
             className="submit-button"
             onClick={handleSubmit}
         >
-            Save
+            {isInitialized ? "Update" : "Save"}
         </button>
       </div>
     </div>

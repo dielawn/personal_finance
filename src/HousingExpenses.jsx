@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './HousingExpenses.css'
 
-const HousingExpenses = ({ setHousingExpenses }) => {
+const HousingExpenses = ({ setHousingExpenses, initialData }) => {
   // Main housing type state
   const [housingType, setHousingType] = useState('');
   
@@ -21,6 +21,93 @@ const HousingExpenses = ({ setHousingExpenses }) => {
   
   // Add state to track whether form has been submitted
   const [isSubmitted, setIsSubmitted] = useState(false);
+  
+  // Initialize from initialData if available
+  useEffect(() => {
+    console.log('Initializing HousingExpenses with:', initialData);
+    
+    if (!initialData) {
+      console.log('No initialData available, using defaults');
+      return;
+    }
+    
+    try {
+      // Set housing type
+      if (initialData.housingType) {
+        console.log(`Setting housing type to: ${initialData.housingType}`);
+        setHousingType(initialData.housingType);
+      }
+      
+      // Set housing details based on type
+      if (initialData.housingDetails) {
+        if (initialData.housingType === 'own') {
+          // Set owner-specific details
+          if (initialData.housingDetails.mortgageBalance !== undefined) {
+            console.log(`Setting mortgage balance to: ${initialData.housingDetails.mortgageBalance}`);
+            setMortgageBalance(initialData.housingDetails.mortgageBalance.toString());
+          }
+          
+          if (initialData.housingDetails.homeValue !== undefined) {
+            console.log(`Setting home value to: ${initialData.housingDetails.homeValue}`);
+            setHomeValue(initialData.housingDetails.homeValue.toString());
+          }
+          
+          if (initialData.housingDetails.interestRate !== undefined) {
+            console.log(`Setting interest rate to: ${initialData.housingDetails.interestRate}`);
+            setInterestRate(initialData.housingDetails.interestRate.toString());
+          }
+          
+          if (initialData.housingDetails.monthlyPayment !== undefined) {
+            console.log(`Setting monthly payment to: ${initialData.housingDetails.monthlyPayment}`);
+            setMonthlyPayment(initialData.housingDetails.monthlyPayment.toString());
+          }
+        } else if (initialData.housingType === 'rent') {
+          // Set renter-specific details
+          if (initialData.housingDetails.monthlyRent !== undefined) {
+            console.log(`Setting monthly rent to: ${initialData.housingDetails.monthlyRent}`);
+            setMonthlyPayment(initialData.housingDetails.monthlyRent.toString());
+          }
+        }
+      }
+      
+      // Set utility details
+      if (initialData.utilities && initialData.utilities.items) {
+        const items = initialData.utilities.items;
+        
+        // Set standard utility values
+        if (items.electricity !== undefined) {
+          console.log(`Setting electricity to: ${items.electricity}`);
+          setElectricity(items.electricity.toString());
+        }
+        
+        if (items.water !== undefined) {
+          console.log(`Setting water to: ${items.water}`);
+          setWater(items.water.toString());
+        }
+        
+        if (items.gas !== undefined) {
+          console.log(`Setting gas to: ${items.gas}`);
+          setGas(items.gas.toString());
+        }
+        
+        // Find other utilities (excluding standard ones)
+        const otherUtils = Object.entries(items)
+          .filter(([key]) => !['electricity', 'water', 'gas'].includes(key))
+          .map(([name, amount]) => ({ name, amount: amount.toString() }));
+        
+        if (otherUtils.length > 0) {
+          console.log('Setting other utilities:', otherUtils);
+          setOtherUtilities(otherUtils);
+        }
+      }
+      
+      // Mark as submitted if we loaded initialData
+      setIsSubmitted(true);
+      
+    } catch (error) {
+      console.error('Error initializing from initialData:', error);
+    }
+  }, [initialData]);
   
   // Function to handle adding another utility
   const handleAddUtility = () => {
@@ -81,9 +168,9 @@ const HousingExpenses = ({ setHousingExpenses }) => {
   // Prepare data object to be sent to parent component
   const prepareDataObject = () => {
     const utilityItems = {
-      electricity: electricity || 0,
-      water: water || 0,
-      gas: gas || 0
+      electricity: electricity ? parseFloat(electricity) : 0,
+      water: water ? parseFloat(water) : 0,
+      gas: gas ? parseFloat(gas) : 0
     };
     
     // Add other utilities to the object
@@ -330,7 +417,7 @@ const HousingExpenses = ({ setHousingExpenses }) => {
           className="submit-button"
           onClick={handleSubmit}
         >
-          Save
+          {isSubmitted ? "Update" : "Save"}
         </button>
       </div>
     )}

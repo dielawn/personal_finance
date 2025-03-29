@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PayStub from './PayStub';
 import AccountBalanceForm from './AccountBalanceForm';
 import DebtTrackerForm from './DebtTrackerForm';
@@ -12,24 +12,81 @@ import useLocalStorage from './hooks/useLocalStorage';
 
 const FinanceNavigation = () => {
   // State for all the financial data
-  const [payStubData, setPayStubData] = useState([]);
-  const [showAddSpouse, setShowAddSpouse] = useState(false);
-  const [showAddJob, setShowAddJob] = useState(false);
-  const [summary, setSummary] = useState({
+  const [payStubData, setPayStubData] = useLocalStorage('finance_paystub_data', []);
+  const [showAddSpouse, setShowAddSpouse] = useLocalStorage('finance_show_spouse', false);
+  const [showAddJob, setShowAddJob] = useLocalStorage('finance_show_job', false);
+  const [summary, setSummary] = useLocalStorage('finance_summary', {
     totalNetPay: 0,
     preTaxSavings: 0
   });
-  const [acctBalanceData, setAcctBalanceData] = useState(null);
-  const [debtList, setDebtList] = useState([]);
-  const [housingExpenses, setHousingExpenses] = useState(null);
-  const [transportExpenses, setTransportExpenses] = useState(null);
-  const [personalExpenses, setPersonalExpenses] = useState(null);
-  const [recurringExpenses, setRecurringExpenses] = useState(null);
-  const [postTaxContributions, setPostTaxContributions] = useState(null);
+  const [acctBalanceData, setAcctBalanceData] = useLocalStorage('finance_acct_balance', null);
+  const [debtList, setDebtList] = useLocalStorage('finance_debt_list', []);
+  const [housingExpenses, setHousingExpenses] = useLocalStorage('finance_housing_expenses', null);
+  const [transportExpenses, setTransportExpenses] = useLocalStorage('finance_transport_expenses', null);
+  const [personalExpenses, setPersonalExpenses] = useLocalStorage('finance_personal_expenses', null);
+  const [recurringExpenses, setRecurringExpenses] = useLocalStorage('finance_recurring_expenses', null);
+  const [postTaxContributions, setPostTaxContributions] = useLocalStorage('finance_post_tax_contributions', null);
 
   // Navigation state
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useLocalStorage('finance_current_step', 0);
   const [progress, setProgress] = useState(0);
+
+  // Add debug logs to verify data is being saved/loaded
+  useEffect(() => {
+    console.log('Current localStorage state:');
+    console.log('Pay stub data:', payStubData);
+    console.log('Account balance data:', acctBalanceData);
+    console.log('Debt list:', debtList);
+    console.log('Housing expenses:', housingExpenses);
+    console.log('Transport expenses:', transportExpenses);
+    console.log('Personal expenses:', personalExpenses);
+    console.log('Recurring expenses:', recurringExpenses);
+    console.log('Post-tax contributions:', postTaxContributions);
+  }, [
+    payStubData, acctBalanceData, debtList, housingExpenses, 
+    transportExpenses, personalExpenses, recurringExpenses, postTaxContributions
+  ]);
+
+  // Wrapper functions to ensure data is properly saved/loaded
+  const handlePayStubDataUpdate = (newData) => {
+    console.log('Updating pay stub data:', newData);
+    setPayStubData(newData);
+  };
+
+  const handleAcctBalanceUpdate = (newData) => {
+    console.log('Updating account balance data:', newData);
+    setAcctBalanceData(newData);
+  };
+
+  const handleDebtListUpdate = (newData) => {
+    console.log('Updating debt list:', newData);
+    setDebtList(newData);
+  };
+
+  const handleHousingExpensesUpdate = (newData) => {
+    console.log('Updating housing expenses:', newData);
+    setHousingExpenses(newData);
+  };
+
+  const handleTransportExpensesUpdate = (newData) => {
+    console.log('Updating transport expenses:', newData);
+    setTransportExpenses(newData);
+  };
+
+  const handlePersonalExpensesUpdate = (newData) => {
+    console.log('Updating personal expenses:', newData);
+    setPersonalExpenses(newData);
+  };
+
+  const handleRecurringExpensesUpdate = (newData) => {
+    console.log('Updating recurring expenses:', newData);
+    setRecurringExpenses(newData);
+  };
+
+  const handlePostTaxContributionsUpdate = (newData) => {
+    console.log('Updating post-tax contributions:', newData);
+    setPostTaxContributions(newData);
+  };
 
   // Define the steps/components to navigate through
   const steps = [
@@ -52,6 +109,7 @@ const FinanceNavigation = () => {
             <li>Savings Contributions</li>
           </ul>
           <p>Each section builds on the previous one to create a comprehensive financial overview.</p>
+          <p><strong>Your progress will be automatically saved</strong> as you move through the questionnaire.</p>
         </div>
       )
     },
@@ -62,19 +120,34 @@ const FinanceNavigation = () => {
       component: (
         <div className="step-container">
           <h2>Income Information</h2>
-          <PayStub id="primary" label="Primary Pay Stub" setPayStubData={setPayStubData} />
+          <PayStub 
+            id="primary" 
+            label="Primary Pay Stub" 
+            setPayStubData={handlePayStubDataUpdate}
+            initialData={payStubData.find(stub => stub.id === "primary")} 
+          />
           
           {showAddSpouse && (
             <div className="additional-paystub">
               <h3>Spouse Pay Stub</h3>
-              <PayStub id="spouse" label="Spouse Pay Stub" setPayStubData={setPayStubData} />
+              <PayStub 
+                id="spouse" 
+                label="Spouse Pay Stub" 
+                setPayStubData={handlePayStubDataUpdate}
+                initialData={payStubData.find(stub => stub.id === "spouse")}
+              />
             </div>
           )}
           
           {showAddJob && (
             <div className="additional-paystub">
               <h3>Secondary Job</h3>
-              <PayStub id="secondary-job" label="Secondary Job" setPayStubData={setPayStubData} />
+              <PayStub 
+                id="secondary-job" 
+                label="Secondary Job" 
+                setPayStubData={handlePayStubDataUpdate}
+                initialData={payStubData.find(stub => stub.id === "secondary-job")}
+              />
             </div>
           )}
           
@@ -103,37 +176,55 @@ const FinanceNavigation = () => {
       id: 'accounts',
       title: 'Accounts',
       description: 'Track your account balances',
-      component: <AccountBalanceForm setAcctBalanceData={setAcctBalanceData} />
+      component: <AccountBalanceForm 
+        setAcctBalanceData={handleAcctBalanceUpdate}
+        initialData={acctBalanceData}
+      />
     },
     {
       id: 'debts',
       title: 'Debts',
       description: 'Track your debts and loans',
-      component: <DebtTrackerForm setAcctBalanceData={setDebtList} />
+      component: <DebtTrackerForm 
+        setAcctBalanceData={handleDebtListUpdate}
+        initialData={debtList}
+      />
     },
     {
       id: 'housing',
       title: 'Housing',
       description: 'Enter your housing expenses',
-      component: <HousingExpenses setHousingExpenses={setHousingExpenses} />
+      component: <HousingExpenses 
+        setHousingExpenses={handleHousingExpensesUpdate}
+        initialData={housingExpenses}
+      />
     },
     {
       id: 'transport',
       title: 'Transport',
       description: 'Enter your transportation costs',
-      component: <TransportExpenses setTransportExpenses={setTransportExpenses} />
+      component: <TransportExpenses 
+        setTransportExpenses={handleTransportExpensesUpdate}
+        initialData={transportExpenses}
+      />
     },
     {
       id: 'personal',
       title: 'Personal',
       description: 'Track your personal expenses',
-      component: <PersonalExpenses setPersonalExpenses={setPersonalExpenses} />
+      component: <PersonalExpenses 
+        setPersonalExpenses={handlePersonalExpensesUpdate}
+        initialData={personalExpenses}
+      />
     },
     {
       id: 'recurring',
       title: 'Recurring',
       description: 'Enter your recurring bills',
-      component: <RecurringExpenses setReOccuringExpenses={setRecurringExpenses} />
+      component: <RecurringExpenses 
+        setReOccuringExpenses={handleRecurringExpensesUpdate}
+        initialData={recurringExpenses}
+      />
     },
     {
       id: 'savings',
@@ -141,9 +232,10 @@ const FinanceNavigation = () => {
       description: 'Configure your savings contributions',
       component: (
         <PostTaxSavings 
-          setPostTaxContributions={setPostTaxContributions} 
+          setPostTaxContributions={handlePostTaxContributionsUpdate} 
           paycheck={payStubData.length > 0 ? payStubData[0].netPay : 0} 
-          acctBalanceData={acctBalanceData} 
+          acctBalanceData={acctBalanceData}
+          initialData={postTaxContributions}
         />
       )
     },
@@ -240,7 +332,7 @@ const FinanceNavigation = () => {
       
       setSummary({ totalNetPay, preTaxSavings });
     }
-  }, [currentStep, payStubData]);
+  }, [currentStep, payStubData, setSummary]);
 
   // Navigate to next step
   const nextStep = () => {

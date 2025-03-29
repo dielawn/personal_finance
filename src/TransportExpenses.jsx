@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TransportExpenses.css'
-const TransportExpenses = ({ setTransportExpenses }) => {
+const TransportExpenses = ({ setTransportExpenses, initialData }) => {
     // Main transport type state
     const [transportMode, setTransportMode] = useState('');
     
@@ -27,6 +27,110 @@ const TransportExpenses = ({ setTransportExpenses }) => {
     // Public transport states
     const [monthlyPublicTransport, setMonthlyPublicTransport] = useState('');
     const [transportPasses, setTransportPasses] = useState([{ type: '', cost: '' }]);
+    
+    // Add state to track whether form has been initialized from data
+    const [isInitialized, setIsInitialized] = useState(false);
+    
+    // Initialize from initialData if available
+    useEffect(() => {
+      console.log('Initializing TransportExpenses with:', initialData);
+      
+      if (!initialData) {
+        console.log('No initialData available, using defaults');
+        return;
+      }
+      
+      try {
+        // Set transport mode
+        if (initialData.transportMode) {
+          console.log(`Setting transport mode to: ${initialData.transportMode}`);
+          setTransportMode(initialData.transportMode);
+        }
+        
+        // Handle specific mode details
+        if (initialData.details) {
+          const details = initialData.details;
+          
+          switch (initialData.transportMode) {
+            case 'own':
+              // Handle owned vehicles
+              if (details.vehicles && Array.isArray(details.vehicles)) {
+                console.log('Setting owned vehicles:', details.vehicles);
+                
+                // Format vehicles for our state structure
+                const formattedVehicles = details.vehicles.map(vehicle => ({
+                  name: vehicle.name || '',
+                  paymentStatus: vehicle.paymentStatus || '',
+                  vehiclePayment: vehicle.vehiclePayment?.toString() || '',
+                  loanBalance: vehicle.loanBalance?.toString() || '',
+                  interestRate: vehicle.interestRate?.toString() || '',
+                  fuelExpense: vehicle.fuelExpense?.toString() || '',
+                  insurance: vehicle.insurance?.toString() || '',
+                  maintenance: vehicle.maintenance?.toString() || ''
+                }));
+                
+                setVehicles(formattedVehicles);
+              }
+              break;
+              
+            case 'lease':
+              // Handle leased vehicle
+              if (details.leasePayment !== undefined) {
+                console.log(`Setting lease payment to: ${details.leasePayment}`);
+                setLeasePayment(details.leasePayment.toString());
+              }
+              
+              if (details.fuelExpense !== undefined) {
+                console.log(`Setting lease fuel expense to: ${details.fuelExpense}`);
+                setLeaseFuelExpense(details.fuelExpense.toString());
+              }
+              
+              if (details.insurance !== undefined) {
+                console.log(`Setting lease insurance to: ${details.insurance}`);
+                setLeaseInsurance(details.insurance.toString());
+              }
+              break;
+              
+            case 'ride':
+              // Handle ride services
+              if (details.monthlyRideServices !== undefined) {
+                console.log(`Setting monthly ride services to: ${details.monthlyRideServices}`);
+                setMonthlyRideServices(details.monthlyRideServices.toString());
+              }
+              break;
+              
+            case 'public':
+              // Handle public transport
+              if (details.monthlyPublicTransport !== undefined) {
+                console.log(`Setting monthly public transport to: ${details.monthlyPublicTransport}`);
+                setMonthlyPublicTransport(details.monthlyPublicTransport.toString());
+              }
+              
+              // Handle passes
+              if (details.passes) {
+                const passes = Object.entries(details.passes).map(([type, cost]) => ({
+                  type,
+                  cost: cost.toString()
+                }));
+                
+                if (passes.length > 0) {
+                  console.log('Setting transport passes:', passes);
+                  setTransportPasses(passes);
+                }
+              }
+              break;
+              
+            default:
+              console.log(`Unknown transport mode: ${initialData.transportMode}`);
+          }
+        }
+        
+        setIsInitialized(true);
+        
+      } catch (error) {
+        console.error('Error initializing from initialData:', error);
+      }
+    }, [initialData]);
     
     // Handle changing vehicle payment status
     const handlePaymentStatusChange = (index, value) => {
@@ -232,6 +336,7 @@ const TransportExpenses = ({ setTransportExpenses }) => {
       if (transportMode) {
         const data = prepareDataObject();
         setTransportExpenses(data);
+        console.log('Parent component updated with data:', data);
       }
     };
 
@@ -633,7 +738,7 @@ const TransportExpenses = ({ setTransportExpenses }) => {
             className="submit-button"
             onClick={handleSubmit}
             >
-            Save
+            {isInitialized ? "Update" : "Save"}
             </button>
         </div>
         )}

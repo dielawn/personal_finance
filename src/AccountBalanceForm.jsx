@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AccountBalanceForm.css';
 
-const AccountBalanceForm = ({ setAcctBalanceData }) => {
+const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
   // Default account types
   const defaultAccountTypes = [
     { id: 'checkingAcct', label: 'Checking Account', value: 0, active: true },
@@ -13,9 +13,78 @@ const AccountBalanceForm = ({ setAcctBalanceData }) => {
     { id: 'otherBalance', label: 'Other Investments', value: 0, active: false }
   ];
 
+  // Initialize from initialData if available
+  const initializeAccounts = () => {
+    console.log('Initializing AccountBalanceForm with:', initialData);
+    
+    if (!initialData) {
+      console.log('No initialData available, using defaults');
+      return defaultAccountTypes;
+    }
+
+    try {
+      if (initialData.accountsList && initialData.accountsList.length > 0) {
+        // Convert accountsList to our accounts format
+        console.log('Using accountsList from initialData:', initialData.accountsList);
+        
+        // Create a map of all default accounts for easy lookup
+        const defaultAccountsMap = defaultAccountTypes.reduce((acc, account) => {
+          acc[account.id] = { ...account };
+          return acc;
+        }, {});
+        
+        // Custom accounts from initialData (those not in default accounts)
+        const customAccounts = [];
+        
+        // Update values for existing accounts and find custom accounts
+        initialData.accountsList.forEach(account => {
+          if (defaultAccountsMap[account.id]) {
+            defaultAccountsMap[account.id].value = account.value;
+            defaultAccountsMap[account.id].active = true;
+          } else {
+            customAccounts.push({
+              id: account.id,
+              label: account.label,
+              value: account.value,
+              active: true,
+              custom: true
+            });
+          }
+        });
+        
+        // Combine default and custom accounts
+        return [...Object.values(defaultAccountsMap), ...customAccounts];
+      }
+      
+      // Fallback: try to use individual properties
+      console.log('No accountsList found, checking individual properties');
+      
+      return defaultAccountTypes.map(account => {
+        // If the account ID exists in initialData, use its value
+        if (initialData[account.id] !== undefined) {
+          return { 
+            ...account, 
+            value: initialData[account.id],
+            active: true 
+          };
+        }
+        return account;
+      });
+    } catch (error) {
+      console.error('Error initializing accounts from initialData:', error);
+      return defaultAccountTypes;
+    }
+  };
+
   // State for managing accounts
-  const [accounts, setAccounts] = useState(defaultAccountTypes);
+  const [accounts, setAccounts] = useState(() => initializeAccounts());
   const [newAccountName, setNewAccountName] = useState('');
+
+  // Re-initialize accounts when initialData changes
+  useEffect(() => {
+    console.log('initialData changed, re-initializing accounts');
+    setAccounts(initializeAccounts());
+  }, [initialData]);
 
   // Handle input changes
   const handleAccountChange = (id, value) => {
@@ -78,7 +147,7 @@ const AccountBalanceForm = ({ setAcctBalanceData }) => {
     .reduce((sum, account) => sum + account.value, 0);
 
   // Update parent component state
-const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
     // Get active accounts
@@ -100,8 +169,8 @@ const handleSubmit = (e) => {
       updatedData[account.id] = account.value;
     });
     
-    setAcctBalanceData(updatedData);
     console.log('Form submitted with data:', updatedData);
+    setAcctBalanceData(updatedData);
   };
 
   // Reset form to default values

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './RecurringExpenses.css';
 
-const RecurringExpenses = ({ setReOccuringExpenses }) => {
+const RecurringExpenses = ({ setReOccuringExpenses, initialData }) => {
   const [expenses, setExpenses] = useState([]);
   const [newExpense, setNewExpense] = useState({
     name: '',
@@ -9,7 +9,35 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
     frequency: 'monthly'
   });
   // Add state to track form submission
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize from initialData if available
+  useEffect(() => {
+    console.log('Initializing RecurringExpenses with:', initialData);
+    
+    if (!initialData) {
+      console.log('No initialData available, using defaults');
+      return;
+    }
+    
+    try {
+      // Check if expenses array exists in initialData
+      if (initialData.expenses && Array.isArray(initialData.expenses)) {
+        // Convert expenses to our format with IDs
+        const expensesWithIds = initialData.expenses.map(expense => ({
+          ...expense,
+          id: Date.now() + Math.random(), // Generate unique ID
+          cost: typeof expense.cost === 'number' ? expense.cost : parseFloat(expense.cost) || 0
+        }));
+        
+        console.log('Setting expenses from initialData:', expensesWithIds);
+        setExpenses(expensesWithIds);
+        setIsInitialized(true);
+      }
+    } catch (error) {
+      console.error('Error initializing from initialData:', error);
+    }
+  }, [initialData]);
 
   const handleNewExpenseChange = (e) => {
     const { name, value } = e.target;
@@ -53,9 +81,9 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
       frequency: 'monthly'
     });
     
-    // Reset submission state when data changes
-    if (isSubmitted) {
-      setIsSubmitted(false);
+    // Track that we've made changes
+    if (!isInitialized) {
+      setIsInitialized(true);
     }
   };
 
@@ -69,9 +97,9 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
       return expense;
     }));
     
-    // Reset submission state when data changes
-    if (isSubmitted) {
-      setIsSubmitted(false);
+    // Track that we've made changes
+    if (!isInitialized) {
+      setIsInitialized(true);
     }
   };
   
@@ -79,9 +107,9 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
     console.log('Removing expense with id:', id);
     setExpenses(prev => prev.filter(expense => expense.id !== id));
     
-    // Reset submission state when data changes
-    if (isSubmitted) {
-      setIsSubmitted(false);
+    // Track that we've made changes
+    if (!isInitialized) {
+      setIsInitialized(true);
     }
   };
 
@@ -109,7 +137,7 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
       }
     });
     
-    setIsSubmitted(true);
+    setIsInitialized(true);
   };
 
   // Log when expenses change
@@ -273,7 +301,7 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
           </div>
           
           <button type="submit" className="save-button" onClick={handleSubmit}>
-            {isSubmitted ? "Update" : "Save"}
+            {isInitialized ? "Update" : "Save"}
           </button>
         </>
       )}
