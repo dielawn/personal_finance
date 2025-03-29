@@ -8,6 +8,7 @@ import PersonalExpenses from './PersonalExpenses';
 import RecurringExpenses from './RecurringExpenses';
 import PostTaxSavings from './PostTaxSavings';
 import './FinanceNavigation.css';
+import useLocalStorage from './hooks/useLocalStorage';
 
 const FinanceNavigation = () => {
   // State for all the financial data
@@ -20,14 +21,7 @@ const FinanceNavigation = () => {
   });
   const [acctBalanceData, setAcctBalanceData] = useState(null);
   const [debtList, setDebtList] = useState([]);
-  const [housingExpenses, setHousingExpenses] = useState({
-    isOwner: true,
-    mortgage: 0,
-    homeValue: 0,
-    interestRate: 0,
-    monthlyPayment: 0,
-    allUtilities: 0,
-  });
+  const [housingExpenses, setHousingExpenses] = useState(null);
   const [transportExpenses, setTransportExpenses] = useState(null);
   const [personalExpenses, setPersonalExpenses] = useState(null);
   const [recurringExpenses, setRecurringExpenses] = useState(null);

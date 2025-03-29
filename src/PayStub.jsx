@@ -1,12 +1,6 @@
-// Format currency
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
-  }).format(amount);
-};import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './PayStub.css';
+import { formatCurrency } from './utils';
 
 const PayStub = ({ id, label = "Pay Stub", setPayStubData }) => {
 // Local state for form data
