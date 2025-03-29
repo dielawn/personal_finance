@@ -1,0 +1,186 @@
+.personal-expenses-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.personal-expenses-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.expense-field {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.expense-field label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.expense-field input {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.expense-field input:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.total-section {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #e9f7fe;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-label {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.total-amount {
+  font-weight: 700;
+  font-size: 18px;
+  color: #2a7de1;
+  margin: 0;
+}
+
+.save-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.save-button:hover {
+  background-color: #3a7bc8;
+}
+
+.save-button:active {
+  background-color: #2a6db5;
+}
+
+.add-custom-expense {
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px dashed #ccc;
+}
+
+.add-custom-expense h3 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #444;
+}
+
+.custom-expense-inputs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.custom-expense-inputs input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.add-expense-button {
+  padding: 10px 15px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-expense-button:hover {
+  background-color: #3d9140;
+}
+
+.custom-expenses-list {
+  margin-top: 15px;
+}
+
+.custom-expenses-list h3 {
+  font-size: 16px;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.custom-expense-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.custom-expense-item label {
+  width: 40%;
+  font-weight: 500;
+}
+
+.custom-expense-item input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin: 0 10px;
+}
+
+.remove-expense-button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-expense-button:hover {
+  background-color: #d32f2f;
+}
+
+/* Add some responsive styling */
+@media (min-width: 768px) {
+  .expense-field {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .expense-field label {
+    width: 45%;
+    margin-bottom: 0;
+  }
+  
+  .expense-field input {
+    width: 55%;
+  }
+}

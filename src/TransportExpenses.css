@@ -1,0 +1,189 @@
+/* TransportExpenses.css */
+.transport-expenses-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+  }
+  
+  h3 {
+    margin-top: 30px;
+    margin-bottom: 15px;
+    color: #444;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+  }
+  
+  h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #555;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  
+  small {
+    display: block;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+  }
+  
+  input[type="number"],
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .radio-group label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+  }
+  
+  .radio-group input {
+    margin-right: 8px;
+  }
+  
+  .vehicle-container {
+    background-color: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .add-vehicle-btn {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 15px 0;
+  }
+  
+  .add-vehicle-btn:hover {
+    background-color: #45a049;
+  }
+  
+  .remove-vehicle-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px 0;
+  }
+  
+  .remove-vehicle-btn:hover {
+    background-color: #d32f2f;
+  }
+  
+  .vehicle-total {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .all-vehicles-total {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+    padding: 10px;
+    background-color: #e8f5e9;
+    border-radius: 4px;
+  }
+  
+  .vehicle-summary {
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #ccc;
+  }
+  
+  .vehicle-summary:last-child {
+    border-bottom: none;
+  }
+  
+  .vehicle-subtotal {
+    font-weight: bold;
+    color: #333;
+    background-color: #f1f8e9;
+    padding: 5px;
+    border-radius: 3px;
+  }
+  
+  .pass-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .pass-row input {
+    flex: 1;
+  }
+  
+  .add-pass-btn {
+    background-color: #4A90E2;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .add-pass-btn:hover {
+    background-color: #3A80D2;
+  }
+  
+  .summary-section {
+    margin-top: 30px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+  }
+  
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .summary-row.total {
+    font-weight: bold;
+    border-bottom: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid #ddd;
+    font-size: 1.1em;
+  }
