@@ -26,6 +26,7 @@ const [formData, setFormData] = useState({
   socialSecurity: 0,
   medicare: 0,
   retirement401k: 0,
+  match401k: 0,
   healthInsurance: 0,
   dentalInsurance: 0,
   visionInsurance: 0,
@@ -112,7 +113,7 @@ const handleInputChange = (e) => {
   const numericFields = [
     'regularHours', 'regularRate', 'overtimeHours', 'overtimeRate',
     'federalTax', 'stateTax', 'socialSecurity', 'medicare',
-    'retirement401k', 'healthInsurance', 'dentalInsurance', 
+    'retirement401k', 'match401k', 'healthInsurance', 'dentalInsurance', 
     'visionInsurance', 'hsa', 'otherDeductions'
   ];
   
@@ -337,6 +338,18 @@ return (
                     type="number"
                     name="retirement401k"
                     value={formData.retirement401k}
+                    onChange={handleInputChange}
+                    step="0.01"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td>Employer 401(k) Match</td>
+                <td>
+                  <input
+                    type="number"
+                    name="match401k"
+                    value={formData.match401k}
                     onChange={handleInputChange}
                     step="0.01"
                   />
