@@ -19,6 +19,9 @@ const HousingExpenses = ({ setHousingExpenses }) => {
   const [gas, setGas] = useState('');
   const [otherUtilities, setOtherUtilities] = useState([{ name: '', amount: '' }]);
   
+  // Add state to track whether form has been submitted
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  
   // Function to handle adding another utility
   const handleAddUtility = () => {
     console.log('Adding new utility field');
@@ -110,25 +113,19 @@ const HousingExpenses = ({ setHousingExpenses }) => {
       totalMonthlyExpenses: totalMonthly
     };
   };
-  
-  // Effect to update parent component when relevant data changes
-  useEffect(() => {
-    if (housingType && setHousingExpenses) {
-      console.log('Housing expenses data changed, notifying parent component');
+
+  // Handle explicit form submission
+  const handleSubmit = () => {
+    console.log('Housing expenses form submitted');
+    if (housingType) {
       const data = prepareDataObject();
       setHousingExpenses(data);
+      setIsSubmitted(true);
+      console.log('Parent component updated with data:', data);
+    } else {
+      alert('Please select whether you rent or own your home.');
     }
-  }, [
-    housingType, 
-    mortgageBalance, 
-    homeValue, 
-    interestRate, 
-    monthlyPayment, 
-    electricity, 
-    water, 
-    gas, 
-    otherUtilities
-  ]);
+  };
 
   return (
     <div className="housing-expenses-container">
@@ -146,6 +143,8 @@ const HousingExpenses = ({ setHousingExpenses }) => {
               onChange={() => {
                 console.log('Selected: Rent');
                 setHousingType('rent');
+                // Reset the isSubmitted flag when selection changes
+                setIsSubmitted(false);
               }}
             />
             Rent
@@ -158,6 +157,8 @@ const HousingExpenses = ({ setHousingExpenses }) => {
               onChange={() => {
                 console.log('Selected: Own');
                 setHousingType('own');
+                // Reset the isSubmitted flag when selection changes
+                setIsSubmitted(false);
               }}
             />
             Own
@@ -321,6 +322,18 @@ const HousingExpenses = ({ setHousingExpenses }) => {
           </div>
         </div>
       )}
+
+    {housingType && (
+      <div className="form-actions">
+        <button 
+          type="button" 
+          className="submit-button"
+          onClick={handleSubmit}
+        >
+          Save
+        </button>
+      </div>
+    )}
     </div>
   );
 };

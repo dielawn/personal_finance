@@ -227,24 +227,15 @@ const TransportExpenses = ({ setTransportExpenses }) => {
       return data;
     };
     
-    // Effect to update parent component when relevant data changes
-    useEffect(() => {
-      if (transportMode && setTransportExpenses) {
-        console.log('Transport expenses data changed, notifying parent component');
+    const handleSubmit = () => {
+      console.log('Transport expenses form submitted');
+      if (transportMode) {
         const data = prepareDataObject();
         setTransportExpenses(data);
       }
-    }, [
-      transportMode,
-      vehicles,
-      leasePayment,
-      leaseFuelExpense,
-      leaseInsurance,
-      monthlyRideServices,
-      monthlyPublicTransport,
-      transportPasses
-    ]);
-  
+    };
+
+
     return (
       <div className="transport-expenses-container">
         <h2>Transportation Expenses</h2>
@@ -633,6 +624,18 @@ const TransportExpenses = ({ setTransportExpenses }) => {
               <span>${calculateTotalTransportExpenses()}</span>
             </div>
           </div>
+        )}
+
+        {transportMode && (
+        <div className="form-actions">
+            <button 
+            type="button" 
+            className="submit-button"
+            onClick={handleSubmit}
+            >
+            Save
+            </button>
+        </div>
         )}
       </div>
     );

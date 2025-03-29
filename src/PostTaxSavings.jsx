@@ -170,6 +170,26 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     console.log('Paycheck amount updated:', sanitizedAmount);
   };
 
+  const handleSubmit = () => {
+    console.log('Post-tax savings form submitted');
+    
+    // Create data object for parent component
+    const contributionsData = {
+      accounts: accounts.filter(account => account.enabled).map(account => {
+        const actualAmount = calculateContribution(account);
+        return {
+          ...account,
+          calculatedAmount: actualAmount
+        };
+      }),
+      total_contributions: totalContributions
+    };
+    
+    console.log('Post-tax contributions submitted:', contributionsData);
+    setPostTaxContributions(contributionsData);
+  };
+  
+
   return (
     <div className="post-tax-savings">
       <h2>Post-Tax Contributions</h2>
@@ -264,6 +284,15 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
         <div className="remaining-amount">
           Remaining from paycheck: ${Math.max(0, payAmount - totalContributions).toFixed(2)}
         </div>
+      </div>
+      <div className="form-actions">
+        <button 
+            type="button" 
+            className="submit-button"
+            onClick={handleSubmit}
+        >
+            Save
+        </button>
       </div>
     </div>
   );

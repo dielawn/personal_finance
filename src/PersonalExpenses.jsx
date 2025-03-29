@@ -12,6 +12,8 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
   const [customExpenses, setCustomExpenses] = useState([]);
   const [newExpenseName, setNewExpenseName] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
+  // Add state to track if form has been submitted
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,6 +25,11 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
       ...prevExpenses,
       [name]: numericValue
     }));
+    
+    // Reset submitted state when form is changed
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
   
   const handleCustomExpenseChange = (index, value) => {
@@ -34,6 +41,11 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
       updated[index] = { ...updated[index], amount: numericValue };
       return updated;
     });
+    
+    // Reset submitted state when form is changed
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
   
   const addCustomExpense = () => {
@@ -52,11 +64,21 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
     setCustomExpenses(prev => [...prev, newExpense]);
     setNewExpenseName('');
     setNewExpenseAmount('');
+    
+    // Reset submitted state when form is changed
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
   
   const removeCustomExpense = (id) => {
     console.log('Removing custom expense with id:', id);
     setCustomExpenses(prev => prev.filter(expense => expense.id !== id));
+    
+    // Reset submitted state when form is changed
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -76,8 +98,18 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
       }))
     };
     
+    // Calculate the total
+    const total = [
+      ...Object.values(finalExpenses).filter(val => val !== ''),
+      ...customExpenses.map(item => item.amount).filter(val => val !== '')
+    ].reduce((sum, val) => sum + parseFloat(val), 0);
+    
+    // Add total to the data
+    allExpenses.total = total;
+    
     console.log('Submitting expenses:', allExpenses);
     setPersonalExpenses(allExpenses);
+    setIsSubmitted(true);
   };
 
   // Calculate total when expenses change
@@ -197,7 +229,7 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
             ))}
           </div>
         )}
-
+        
         <div className="total-section">
           <p className="total-label">Total Monthly Expenses:</p>
           <p className="total-amount">
@@ -208,7 +240,9 @@ const PersonalExpenses = ({ setPersonalExpenses }) => {
           </p>
         </div>
 
-       
+        <button type="submit" className="save-button">
+          {isSubmitted ? "Update" : "Save"}
+        </button>
       </form>
     </div>
   );

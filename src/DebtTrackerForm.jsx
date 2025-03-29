@@ -245,7 +245,9 @@ const DebtTrackerForm = ({ setAcctBalanceData }) => {
       )}
       
       <div className="form-actions">
-      
+        <button type="button" className="submit-button" onClick={handleSubmit}>
+            Save
+        </button>
       </div>
     </div>
   );

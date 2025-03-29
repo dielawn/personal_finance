@@ -8,6 +8,8 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
     cost: '',
     frequency: 'monthly'
   });
+  // Add state to track form submission
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleNewExpenseChange = (e) => {
     const { name, value } = e.target;
@@ -50,6 +52,11 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
       cost: '',
       frequency: 'monthly'
     });
+    
+    // Reset submission state when data changes
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
 
   const updateExpense = (id, field, value) => {
@@ -61,11 +68,21 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
       }
       return expense;
     }));
+    
+    // Reset submission state when data changes
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
   
   const removeExpense = (id) => {
     console.log('Removing expense with id:', id);
     setExpenses(prev => prev.filter(expense => expense.id !== id));
+    
+    // Reset submission state when data changes
+    if (isSubmitted) {
+      setIsSubmitted(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -91,6 +108,8 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
         count: expenses.length
       }
     });
+    
+    setIsSubmitted(true);
   };
 
   // Log when expenses change
@@ -124,11 +143,12 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
     }, 0);
   };
 
+
   return (
     <div className="recurring-expenses-container">
-      <h2>Recurring Expenses</h2>
-      <p className="description">Track your subscription services and memberships</p>
-      
+    <h2>Recurring Expenses</h2>
+    <p className="description">Track your subscription services and memberships</p>
+
       <div className="add-expense-form">
         <h3>Add New Service or Membership</h3>
         <div className="form-inputs">
@@ -234,28 +254,30 @@ const RecurringExpenses = ({ setReOccuringExpenses }) => {
             <p>No recurring expenses added yet. Add your first one above!</p>
           </div>
         )}
-        
+        </form>
         {expenses.length > 0 && (
-          <>
-            <div className="summary-section">
-              <div className="summary-row">
-                <span>Monthly Equivalent:</span>
-                <span className="summary-amount">${calculateMonthlyTotal().toFixed(2)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Annual Equivalent:</span>
-                <span className="summary-amount">${calculateAnnualTotal().toFixed(2)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Total Services:</span>
-                <span className="summary-count">{expenses.length}</span>
-              </div>
+        <>
+          <div className="summary-section">
+            <div className="summary-row">
+              <span>Monthly Equivalent:</span>
+              <span className="summary-amount">${calculateMonthlyTotal().toFixed(2)}</span>
             </div>
-            
-           
-          </>
-        )}
-      </form>
+            <div className="summary-row">
+              <span>Annual Equivalent:</span>
+              <span className="summary-amount">${calculateAnnualTotal().toFixed(2)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Total Services:</span>
+              <span className="summary-count">{expenses.length}</span>
+            </div>
+          </div>
+          
+          <button type="submit" className="save-button" onClick={handleSubmit}>
+            {isSubmitted ? "Update" : "Save"}
+          </button>
+        </>
+      )}
+    
     </div>
   );
 };

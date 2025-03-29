@@ -138,6 +138,38 @@ const getPayIntervalText = (interval) => {
   }
 };
 
+const handleSubmit = () => {
+  console.log('Pay stub form submitted');
+  
+  // Update the parent component with both form data and calculations
+  if (setPayStubData) {
+    setPayStubData(prevData => {
+      // Initialize as empty array if it's null
+      const currentData = Array.isArray(prevData) ? [...prevData] : [];
+      
+      // Find if this pay stub already exists in the array
+      const existingIndex = currentData.findIndex(item => item.id === id);
+      
+      // Create the updated pay stub object
+      const updatedPayStub = {
+        id,
+        label,
+        ...formData,
+        ...calculations
+      };
+      
+      // Either update existing or add new
+      if (existingIndex >= 0) {
+        currentData[existingIndex] = updatedPayStub;
+      } else {
+        currentData.push(updatedPayStub);
+      }
+      
+      return currentData;
+    });
+  }
+};
+
 return (
   <div className="paystub-container">
     {/* Paycheck Section */}
@@ -393,6 +425,15 @@ return (
           <div>{formatCurrency(calculations.netPay)}</div>
         </div>
       </div>
+    </div>
+    <div className="paystub-actions">
+      <button 
+        type="button" 
+        className="save-button"
+        onClick={handleSubmit}
+      >
+        Save
+      </button>
     </div>
   </div>
 );

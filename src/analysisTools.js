@@ -11,20 +11,33 @@ function calc401kPercent(contributionDollar, grossPay) {
    return contributionPercent
 }
 
-//calc projections
+//calc balance + contributions + growth 
 function projections(payInterval, acct) {
+    let monthly;
+    let annually;
     switch(payInterval) {
         case 'weekly':
-          const monthly = acct.contributionDollar * 4
-          const annually = acct.contributionDollar * 52
+            monthly = acct.contributionDollar * 4
+            annually = acct.contributionDollar * 52
           break;
         case 'bi-weekly':
-          // code block
+            monthly = acct.contributionDollar * 2
+            annually = acct.contributionDollar * 26
           break;
         case 'monthly':
-          // code block
+            monthly = acct.contributionDollar
+            annually = acct.contributionDollar * 12
           break;
         default:
           // code block
       }
 } 
+
+
+//analize pay stub
+function analizePayStub(payStub) {
+    const {retirement401k, hsa, grossPay} = payStub
+    const preTaxSavings = retirement401k + hsa
+    const employeePercent = retirement401k / grossPay * 100
+    const matchPercent = match401k / grossPay * 100
+}
