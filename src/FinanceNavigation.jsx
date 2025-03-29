@@ -328,6 +328,16 @@ const FinanceNavigation = () => {
         default:
           return null;
       }
+
+      useEffect(() => {
+        if (debtList && debtList.length > 0) {
+          // Commented out line to log each debt's name and interest rate
+          debtList.map((debt) => console.log(debt.name, debt.interestRate))
+          
+          // Currently, it just logs the length of the debtList array
+          console.log(debtList.length)
+        }
+    }, [debtList])
       
       return (
         <div className="pay-equivalents">
@@ -381,9 +391,40 @@ const FinanceNavigation = () => {
       <span>Total Minimum Monthly Payment:</span> 
       <span>${debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     </p>
+    <p>
+      <span>Total Annual Minimum Payment:</span>
+      <span>${(debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>    
+      <span>Months to pay off:</span>     
+      <span>{debtList.reduce((sum, debt) => (sum + debt.balance) / debt.minimumPayment, 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>     
+    </p> 
+    <p>
+      <span>Monthly Interest:</span>
+      <span>${debtList.reduce((sum, debt) => sum + ((debt.balance * debt.interestRate) / 12), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Annual Interest:</span>
+      <span>${debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Total Interest:</span>
+      <span>${debtList.reduce((totalInterest, debt) => {
+        const monthlyRate = debt.interestRate / 12;
+        if (monthlyRate === 0 || debt.minimumPayment <= 0) return totalInterest;
+        
+        // Calculate how many months to pay off
+        const months = Math.log(debt.minimumPayment / (debt.minimumPayment - monthlyRate * debt.balance)) / Math.log(1 + monthlyRate);
+        
+        // Calculate total payments
+        const totalPayments = debt.minimumPayment * months;
+        
+        // Total interest is total payments minus the principal
+        return totalInterest + (totalPayments - debt.balance);
+      }, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
   </div>
 )}
-
 {housingExpenses && (
   <div className="summary-section">
     <h3>Housing</h3>
