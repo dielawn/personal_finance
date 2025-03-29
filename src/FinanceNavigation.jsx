@@ -34,6 +34,16 @@ const FinanceNavigation = () => {
   // Prevent multiple updates
   const updateInProgress = React.useRef(false);
 
+  useEffect(() => {
+    if (debtList && debtList.length > 0) {
+      // Commented out line to log each debt's name and interest rate
+      debtList.map((debt) => console.log( debt.interestRate))
+      
+      // Currently, it just logs the length of the debtList array
+      console.log(debtList.length)
+    }
+}, [debtList])
+
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
     if (updateInProgress.current) return;
@@ -329,15 +339,7 @@ const FinanceNavigation = () => {
           return null;
       }
 
-      useEffect(() => {
-        if (debtList && debtList.length > 0) {
-          // Commented out line to log each debt's name and interest rate
-          debtList.map((debt) => console.log(debt.name, debt.interestRate))
-          
-          // Currently, it just logs the length of the debtList array
-          console.log(debtList.length)
-        }
-    }, [debtList])
+
       
       return (
         <div className="pay-equivalents">
@@ -401,16 +403,16 @@ const FinanceNavigation = () => {
     </p> 
     <p>
       <span>Monthly Interest:</span>
-      <span>${debtList.reduce((sum, debt) => sum + ((debt.balance * debt.interestRate) / 12), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${debtList.reduce((sum, debt) => sum + ((debt.balance * (debt.interestRate / 100)) / 12), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     </p>
     <p>
       <span>Annual Interest:</span>
-      <span>${debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate / 100), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     </p>
     <p>
       <span>Total Interest:</span>
       <span>${debtList.reduce((totalInterest, debt) => {
-        const monthlyRate = debt.interestRate / 12;
+        const monthlyRate = (debt.interestRate / 100) / 12;
         if (monthlyRate === 0 || debt.minimumPayment <= 0) return totalInterest;
         
         // Calculate how many months to pay off
@@ -436,9 +438,57 @@ const FinanceNavigation = () => {
       <span>Annual Housing Expenses:</span>
       <span>${((housingExpenses.totalMonthlyExpenses || 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
     </p>
+    
+    {housingExpenses.housingType === 'own' && housingExpenses.mortgagePayment > 0 && (
+      <>
+        <p>
+          <span>Monthly Mortgage Interest:</span>
+          <span>${(((housingExpenses.mortgageBalance || 0) * ((housingExpenses.mortgageInterestRate || 0) / 100)) / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </p>
+        <p>
+          <span>Annual Mortgage Interest:</span>
+          <span>${((housingExpenses.mortgageBalance || 0) * (housingExpenses.mortgageInterestRate || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </p>
+        <p>
+          <span>Months to pay off:</span>
+          <span>
+            {(() => {
+              const balance = housingExpenses.mortgageBalance || 0;
+              const payment = housingExpenses.mortgagePayment || 0;
+              const interestRate = housingExpenses.mortgageInterestRate || 0;
+              
+              if (interestRate === 0 || payment <= 0) return "0";
+              
+              const monthlyRate = (interestRate / 100) / 12;
+              const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
+              
+              return months.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            })()}
+          </span>
+        </p>
+        <p>
+          <span>Total Mortgage Interest:</span>
+          <span>
+            ${(() => {
+              const balance = housingExpenses.mortgageBalance || 0;
+              const payment = housingExpenses.mortgagePayment || 0;
+              const interestRate = housingExpenses.mortgageInterestRate || 0;
+              
+              if (interestRate === 0 || payment <= 0) return "0.00";
+              
+              const monthlyRate = (interestRate / 100) / 12;
+              const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
+              const totalPayments = payment * months;
+              const totalInterest = totalPayments - balance;
+              
+              return totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            })()}
+          </span>
+        </p>
+      </>
+    )}
   </div>
 )}
-
 {transportExpenses && (
   <div className="summary-section">
     <h3>Transportation</h3>
