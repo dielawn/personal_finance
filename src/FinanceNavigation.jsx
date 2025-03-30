@@ -9,6 +9,8 @@ import RecurringExpenses from './RecurringExpenses';
 import PostTaxSavings from './PostTaxSavings';
 import './FinanceNavigation.css';
 import useLocalStorage from './hooks/useLocalStorage';
+import ExportButtons from './ExportButtons';
+import { getPayIntervalMultipliers } from './utils/utils.js';
 
 const FinanceNavigation = () => {
   // State for all the financial data with useLocalStorage integration
@@ -43,10 +45,10 @@ const FinanceNavigation = () => {
     //   console.log(debtList.length)
     // }
 
-    if (transportExpenses) {
-      console.log('Transport data in summary:', transportExpenses);
+    if (payStubData) {
+      console.log('payInterval:', payStubData[0].payInterval);
     }
-}, [transportExpenses])
+}, [payStubData])
 
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
@@ -431,6 +433,27 @@ const FinanceNavigation = () => {
     </p>
   </div>
 )}
+{postTaxContributions && 
+  <div className="summary-section">
+    <h3>Savings Contributions Post Tax</h3>
+    <p>
+      <span>Total Savings Contributions:</span>
+      <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    
+    {payStubData.payInterval !== 'monthly' && (
+      <p>
+        <span>Monthly Savings Contributions:</span>
+        <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      </p>
+    )}
+    
+    <p>
+      <span>Annual Savings Contributions:</span>
+      <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  </div>
+}
 {housingExpenses && (
   <div className="summary-section">
     <h3>Housing</h3>
@@ -656,11 +679,24 @@ const FinanceNavigation = () => {
     </p>
   </div>
 )}
-          
+          <ExportButtons 
+        data={{
+          payStubData,
+          summary,
+          acctBalanceData,
+          debtList,
+          housingExpenses,
+          transportExpenses,
+          personalExpenses,
+          recurringExpenses,
+          postTaxContributions
+        }} 
+      />
           <div className="final-message">
             <h3>Congratulations!</h3>
             <p>You've completed the financial questionnaire. Use this information to make informed decisions about your financial future.</p>
             <button onClick={() => window.print()}>Print Summary</button>
+            
           </div>
         </div>
       )
