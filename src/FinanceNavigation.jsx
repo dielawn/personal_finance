@@ -10,7 +10,9 @@ import PostTaxSavings from './PostTaxSavings';
 import './FinanceNavigation.css';
 import useLocalStorage from './hooks/useLocalStorage';
 import ExportButtons from './ExportButtons';
-import { getPayIntervalMultipliers } from './utils/utils.js';
+import { getPayIntervalMultipliers, getColorClass } from './utils/utils.js';
+import PayStubSummary from './PayStubSum.jsx';
+import AccountsSummary from './AcctSum.jsx';
 
 const FinanceNavigation = () => {
   // State for all the financial data with useLocalStorage integration
@@ -32,9 +34,105 @@ const FinanceNavigation = () => {
   // Navigation state
   const [currentStep, setCurrentStep] = useLocalStorage('finance_current_step', 0);
   const [progress, setProgress] = useState(0);
-
   // Prevent multiple updates
   const updateInProgress = React.useRef(false);
+
+  //pay stub
+  const preTaxTotal = (payStubData[0]?.retirement401k || 0) + payStubData[0]?.hsa || 0;
+
+  const contribution401k = payStubData[0]?.retirement401k || 0
+  const hsa = payStubData[0]?.hsa || 0
+
+  const multipliers = getPayIntervalMultipliers(payStubData[0].payInterval);
+
+  const monthly401kContributions = contribution401k * multipliers.monthly
+  const monthlyHsaContributions = hsa * multipliers.monthly
+
+
+  const annual401kContributions = contribution401k * multipliers.annual;
+  const annualHsaContributions = hsa * multipliers.annual;
+
+  const grossPay = payStubData[0].grossPay;
+  const netPay = payStubData[0].netPay
+  
+
+  // Annual post-tax values
+  const totalPostTaxContributions = postTaxContributions?.total_contributions || 0;
+  const iraContribution = postTaxContributions?.accounts[1]?.amount || 0;
+  const savingsAcctContribution = postTaxContributions?.accounts[0]?.amount || 0;
+  
+  // Monthly post-tax values
+  const monthlyIraContributions = iraContribution * multipliers.monthly;
+  const monthlySavingsAcctContributions = savingsAcctContribution * multipliers.monthly;
+  const monthlyTotalPostTaxContributions = totalPostTaxContributions * multipliers.monthly;
+  
+  // Annual post-tax values
+  const annualIraContributions = iraContribution * multipliers.annual;
+  const annualSavingsAcctContributions = savingsAcctContribution * multipliers.annual;
+  const annualTotalPostTaxContributions = totalPostTaxContributions * multipliers.annual;
+  
+  // Savings Rate
+  const preTaxSavingsRate = ((
+    preTaxTotal + totalPostTaxContributions) / grossPay) * 100 || 0;
+
+  const postTaxSavingsRate = ((
+    totalPostTaxContributions + preTaxTotal) / netPay) * 100 || 0;
+
+    // Debt
+  const totalDebt = debtList.reduce((sum, debt) => sum + debt.balance, 0);
+  const totalMinMonthlyPayment = debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0)
+  const totalMinAnnualPayment =  totalMinMonthlyPayment * 12
+  const monthsUntilPaidOff = debtList.reduce((sum, debt) => (sum + debt.balance) / debt.minimumPayment, 0)
+  const annualInterest = debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate / 100), 0)
+  const monthlyInterest = annualInterest / 12 || 0;
+
+  const totalInterest = debtList.reduce((totalInterest, debt) => {
+    const monthlyRate = (debt.interestRate / 100) / 12;
+    if (monthlyRate === 0 || debt.minimumPayment <= 0) return totalInterest;
+    
+    // Calculate how many months to pay off
+    const months = Math.log(debt.minimumPayment / (debt.minimumPayment - monthlyRate * debt.balance)) / Math.log(1 + monthlyRate);
+    
+    // Calculate total payments
+    const totalPayments = debt.minimumPayment * months;
+    
+    // Total interest is total payments minus the principal
+    const total = totalInterest.balance + (totalPayments - debt.balance)
+        
+    return total;
+  });
+
+  // Housing, utilities
+  const monthlyHousingExp = housingExpenses.totalMonthlyExpenses || 0;
+  const annualHousingExp = (housingExpenses.totalMonthlyExpenses || 0) * 12
+  const mortgageMonthlyExp = ((housingExpenses.housingDetails.mortgageBalance || 0) * ((housingExpenses.housingDetails.interestRate || 0) / 100)) / 12
+  const annualMortgageExp = (housingExpenses.housingDetails.mortgageBalance || 0) * (housingExpenses.housingDetails.interestRate || 0) / 100;
+  const mortgageBalance = housingExpenses.housingDetails.mortgageBalance || 0;
+  const mortgagePayment = housingExpenses.housingDetails.monthlyPayment || 0;
+  const mortgageRate = housingExpenses.housingDetails.interestRate || 0;
+  const monthlyRate = (mortgageRate / 100) / 12;
+  const monthsMortgagePaidOff = Math.log(mortgagePayment / (mortgagePayment - monthlyRate * mortgageBalance)) / Math.log(1 + monthlyRate) || 0;
+  
+  const totalMortgageInterest = () => {      
+    if (mortgageRate === 0 || mortgagePayment <= 0) return "0.00";
+    
+    const months = Math.log(mortgagePayment / (mortgagePayment - monthlyRate * mortgageBalance)) / Math.log(1 + monthlyRate);
+    const totalPayments = mortgagePayment * months;
+    const totalInterest = totalPayments - mortgageBalance;
+
+    return formatCurrency(totalInterest);
+  }
+
+  // Transportation, vehicle loans, insurance, maintenance, fuel
+  const monthlyTransportExp = transportExpenses.totalMonthlyExpenses || 0;
+  const annualTransportExp = (transportExpenses.totalMonthlyExpenses || 0) * 12;
+  const numberOfVehicles = transportExpenses.details.vehicles.length;
+
+
+  // Format all numbers for display
+   const formatCurrency = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+   const formatPercent = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+   const formatMonths = (value) =>value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
   useEffect(() => {
     // if (debtList && debtList.length > 0) {
@@ -45,10 +143,10 @@ const FinanceNavigation = () => {
     //   console.log(debtList.length)
     // }
 
-    if (postTaxContributions) {
-      console.log('ira:', postTaxContributions.accounts[0].amount);
+    if (preTaxSavingsRate) {
+      console.log('pre tax sav cd', contribution401k, hsa, postTaxContributions.total_contributions);
     }
-}, [postTaxContributions])
+}, [preTaxSavingsRate])
 
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
@@ -317,175 +415,130 @@ const FinanceNavigation = () => {
             {payStubData && payStubData.length > 0 && payStubData[0].netPay > 0 && (
   <div className="pay-breakdown-section">
     <h4>Pay Breakdown</h4>
-    {(() => {
-      const primaryPayStub = payStubData[0];
-      const netPay = primaryPayStub.netPay;
-      let weeklyPay, biWeeklyPay, monthlyPay, annualPay;
-      
-      switch(primaryPayStub.payInterval) {
-        case 'weekly':
-          weeklyPay = netPay;
-          biWeeklyPay = netPay * 2;
-          monthlyPay = netPay * 4.33; // Average weeks in a month
-          annualPay = netPay * 52;
-          break;
-        case 'bi-weekly':
-          weeklyPay = netPay / 2;
-          biWeeklyPay = netPay;
-          monthlyPay = netPay * 2.17; // Average bi-weekly periods in a month
-          annualPay = netPay * 26;
-          break;
-        case 'monthly':
-          weeklyPay = netPay / 4.33;
-          biWeeklyPay = netPay / 2.165;
-          monthlyPay = netPay;
-          annualPay = netPay * 12;
-          break;
-        default:
-          return null;
-      }
-
-
-      
-      return (
-        <div className="pay-equivalents">
-          <div className="pay-row">
-            <span>Weekly Net Pay:</span>
-            <span className="pay-amount">${weeklyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-          <div className="pay-row">
-            <span>Bi-Weekly Net Pay:</span>
-            <span className="pay-amount">${biWeeklyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-          <div className="pay-row">
-            <span>Monthly Net Pay:</span>
-            <span className="pay-amount">${monthlyPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-          <div className="pay-row">
-            <span>Annual Net Pay:</span>
-            <span className="pay-amount">${annualPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          </div>
-          
-          
-        </div>
-      );
-    })()}
+    <PayStubSummary payStubData={payStubData} />   
   </div>
 )}
           </div>
-          
-          {acctBalanceData && (
+          <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} />
+          {/* {acctBalanceData && (
   <div className="summary-section">
     <h3>Account Balances</h3>
-    <p>
-      <span>Total Assets: </span>
-      <span>${(acctBalanceData.totalAssets || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>              
-    </p>
+   
     <div className="accounts-list">
       {acctBalanceData.accountsList?.map(account => (
         <div key={account.id} className="account-item">
-          <span>{account.label}:</span> <span>${account.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>{account.label}:</span> 
+          {account.id === '_401kBalance' ? 
+          <span>{formatCurrency(account.value)}</span> 
+          : 
+          <span>${formatCurrency(account.value)}</span>}
         </div>
       ))}
     </div>
+    <p>
+      <span>Total Assets: </span>
+      <span>${formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
+    </p>
   </div>
-)}
+)} */}
 {postTaxContributions && payStubData &&
   <div className="summary-section">
     <h3>Pre Tax Savings Contributions</h3>
     <h4>Pay Period Contributions</h4>
     <p>
-      <span>Total Pre Tax Contributions</span>
-      <span>-${(payStubData[0]?.retirement401k + payStubData[0]?.hsa || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>Total Pre Tax Contribution</span>
+      <span>-${formatCurrency(preTaxTotal)}</span>
     </p>
     <p>
-      <span>401k Contributions:</span>
-      <span>-${(payStubData[0]?.retirement401k || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>401k Contribution:</span>
+      <span>-${formatCurrency(contribution401k)}</span>
     </p>
     <p>
       <span>Health Savings Account (HSA):</span>
-      <span>-${(payStubData[0]?.hsa || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${formatCurrency(hsa)}</span>
     </p>
     
     {/* Monthly pre-tax contributions */}
     <h4>Monthly Contributions</h4>
     <p>
       <span>Monthly 401k Contributions:</span>
-      <span>-${((payStubData[0]?.retirement401k || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${formatCurrency(monthly401kContributions)}</span>
     </p>
     <p>
       <span>Monthly HSA Contributions:</span>
-      <span>-${((payStubData[0]?.hsa || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${formatCurrency(monthlyHsaContributions)}</span>
     </p>
     
     {/* Annual pre-tax contributions */}
     <h4>Annual Contributions</h4>
     <p>
       <span>Annual 401k Contributions:</span>
-      <span>-${((payStubData[0]?.retirement401k || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${formatCurrency(annual401kContributions)}</span>
     </p>
     <p>
       <span>Annual HSA Contributions:</span>
-      <span>-${((payStubData[0]?.hsa || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${formatCurrency(annualHsaContributions)}</span>
     </p>
-  <p>
-    <span>Pre Tax Savings Rate</span>
-    <span>{(((payStubData[0]?.retirement401k + payStubData[0]?.hsa ) / payStubData[0].grossPay) * 100|| 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>
-  </p>
-
-    
+   
+    <p className={getColorClass(preTaxSavingsRate)}>
+      <span>Pre Tax Savings Rate <em>(401k + HSA + IRA + Savings Account) / Gross Pay</em></span>
+      <span>{formatPercent(preTaxSavingsRate)}%</span>
+    </p>
+     
    {/* Post Tax Savings Contributions section */}
 <h3>Post Tax Savings Contributions</h3>
 <h4>Pay Period Contributions</h4>
 <p>
   <span>Total Savings Contributions:</span>
-  <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(totalPostTaxContributions)}</span>
 </p>
 
 {/* Individual post-tax accounts */}
 <p>
   <span>IRA Contributions:</span>
-  <span>-${(postTaxContributions?.accounts[1].amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(iraContribution)}</span>
 </p>
 <p>
   <span>Savings Account Contributions:</span>
-  <span>-${(postTaxContributions?.accounts[0].amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(savingsAcctContribution)}</span>
 </p>
 
 {/* Monthly post-tax contributions */}
 <h4>Monthly Contributions</h4>
 <p>
   <span>Monthly IRA Contributions:</span>
-  <span>-${((postTaxContributions?.accounts[1].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(monthlyIraContributions)}</span>
 </p>
 <p>
   <span>Monthly Savings Account Contributions:</span>
-  <span>-${((postTaxContributions?.accounts[0].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(monthlySavingsAcctContributions)}</span>
 </p>
 <p>
   <span>Monthly Total Contributions:</span>
-  <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(monthlyTotalPostTaxContributions)}</span>
 </p>
 
 {/* Annual post-tax contributions */}
 <h4>Annual Contributions</h4>
 <p>
   <span>Annual IRA Contributions:</span>
-  <span>-${((postTaxContributions?.accounts[1].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(annualIraContributions)}</span>
 </p>
 <p>
   <span>Annual Savings Account Contributions:</span>
-  <span>-${((postTaxContributions?.accounts[0].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(annualSavingsAcctContributions)}</span>
 </p>
 <p>
   <span>Annual Total Contributions:</span>
-  <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+  <span>-${formatCurrency(annualTotalPostTaxContributions)}</span>
 </p>
 
-<p>
-  <span>Post Tax Savings Rate</span>
-  <span>{(((postTaxContributions?.accounts[0].amount + postTaxContributions?.accounts[1].amount ) / payStubData[0].netPay) * 100|| 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>
-</p>
+
+    <p className={getColorClass(postTaxSavingsRate)}>
+      <span>Post Tax Savings Rate <em>(401k + HSA + IRA + Savings Account) / Net Pay</em></span>
+      <span>{formatPercent(postTaxSavingsRate)}%</span>
+    </p>
+
   </div>
 }
 
@@ -496,43 +549,31 @@ const FinanceNavigation = () => {
     <h3>Debts</h3>
     <p>
       <span>Total Debt:</span> 
-      <span>${debtList.reduce((sum, debt) => sum + debt.balance, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(totalDebt)}</span>
     </p>
     <p>
       <span>Total Minimum Monthly Payment:</span> 
-      <span>${debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(totalMinMonthlyPayment)}</span>
     </p>
     <p>
       <span>Total Annual Minimum Payment:</span>
-      <span>${(debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(totalMinAnnualPayment)}</span>
     </p>
     <p>    
       <span>Months to pay off:</span>     
-      <span>{debtList.reduce((sum, debt) => (sum + debt.balance) / debt.minimumPayment, 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>     
+      <span>{formatMonths(monthsUntilPaidOff)}</span>     
     </p> 
     <p>
       <span>Monthly Interest:</span>
-      <span>${debtList.reduce((sum, debt) => sum + ((debt.balance * (debt.interestRate / 100)) / 12), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(monthlyInterest)}</span>
     </p>
     <p>
       <span>Annual Interest:</span>
-      <span>${debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate / 100), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(annualInterest)}</span>
     </p>
     <p>
       <span>Total Interest:</span>
-      <span>${debtList.reduce((totalInterest, debt) => {
-        const monthlyRate = (debt.interestRate / 100) / 12;
-        if (monthlyRate === 0 || debt.minimumPayment <= 0) return totalInterest;
-        
-        // Calculate how many months to pay off
-        const months = Math.log(debt.minimumPayment / (debt.minimumPayment - monthlyRate * debt.balance)) / Math.log(1 + monthlyRate);
-        
-        // Calculate total payments
-        const totalPayments = debt.minimumPayment * months;
-        
-        // Total interest is total payments minus the principal
-        return totalInterest + (totalPayments - debt.balance);
-      }, 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(totalInterest)}</span>
     </p>
   </div>
 )}
@@ -542,57 +583,34 @@ const FinanceNavigation = () => {
     <h3>Housing</h3>
     <p>
       <span>Monthly Housing Expenses:</span>
-      <span>${(housingExpenses.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(monthlyHousingExp)}</span>
     </p>
     <p>
       <span>Annual Housing Expenses:</span>
-      <span>${((housingExpenses.totalMonthlyExpenses || 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(annualHousingExp)}</span>
     </p>
     
     {housingExpenses.housingType === 'own' && housingExpenses.housingDetails && housingExpenses.housingDetails.monthlyPayment > 0 && (
       <>
         <p>
           <span>Monthly Mortgage Interest:</span>
-          <span>${(((housingExpenses.housingDetails.mortgageBalance || 0) * ((housingExpenses.housingDetails.interestRate || 0) / 100)) / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>${formatCurrency(mortgageMonthlyExp)}</span>
+
         </p>
         <p>
           <span>Annual Mortgage Interest:</span>
-          <span>${((housingExpenses.housingDetails.mortgageBalance || 0) * (housingExpenses.housingDetails.interestRate || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>${formatCurrency(annualMortgageExp)}</span>
         </p>
         <p>
           <span>Months to pay off:</span>
           <span>
-            {(() => {
-              const balance = housingExpenses.housingDetails.mortgageBalance || 0;
-              const payment = housingExpenses.housingDetails.monthlyPayment || 0;
-              const interestRate = housingExpenses.housingDetails.interestRate || 0;
-              
-              if (interestRate === 0 || payment <= 0) return "0";
-              
-              const monthlyRate = (interestRate / 100) / 12;
-              const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
-              
-              return months.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-            })()}
+            {formatMonths(monthsMortgagePaidOff)}
           </span>
         </p>
         <p>
           <span>Total Mortgage Interest:</span>
           <span>
-            ${(() => {
-              const balance = housingExpenses.housingDetails.mortgageBalance || 0;
-              const payment = housingExpenses.housingDetails.monthlyPayment || 0;
-              const interestRate = housingExpenses.housingDetails.interestRate || 0;
-              
-              if (interestRate === 0 || payment <= 0) return "0.00";
-              
-              const monthlyRate = (interestRate / 100) / 12;
-              const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
-              const totalPayments = payment * months;
-              const totalInterest = totalPayments - balance;
-              
-              return totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            })()}
+            ${totalMortgageInterest()}
           </span>
         </p>
       </>
@@ -604,33 +622,33 @@ const FinanceNavigation = () => {
     <h3>Transportation</h3>
     <p>
       <span>Monthly Transportation Expenses:</span>
-      <span>${(transportExpenses.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(monthlyTransportExp)}</span>
     </p>
     <p>
       <span>Annual Transportation Expenses:</span>
-      <span>${((transportExpenses.totalMonthlyExpenses || 0) * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${formatCurrency(annualTransportExp)}</span>
     </p>
     
     {transportExpenses.transportMode === 'own' && transportExpenses.details && transportExpenses.details.vehicles && (
       <>
         <p>
           <span>Number of Vehicles:</span>
-          <span>{transportExpenses.details.vehicles.length}</span>
+          <span>{numberOfVehicles}</span>
         </p>
         
         <p>
           <span>Total Monthly Fuel:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.fuelExpense || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.fuelExpense || 0), 0)}</span>
         </p>
         
         <p>
           <span>Total Monthly Insurance:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.insurance || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.insurance || 0), 0)}</span>
         </p>
         
         <p>
           <span>Total Monthly Maintenance:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.maintenance || 0), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.maintenance || 0), 0)}</span>
         </p>
         
         {transportExpenses.details.vehicles.filter(vehicle => vehicle.paymentStatus === 'paid-off').length > 0 && (
@@ -646,15 +664,15 @@ const FinanceNavigation = () => {
               <h4>Loan/Payments Data For {vehicle.name}</h4>
               <p>
                 <span>Monthly Payment:</span>
-                <span>${(vehicle.vehiclePayment || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span>${(vehicle.vehiclePayment || 0)}</span>
               </p>
               <p>
                 <span>Monthly Interest:</span>
-                <span>${(((vehicle.loanBalance || 0) * ((vehicle.interestRate || 0) / 100)) / 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span>${(((vehicle.loanBalance || 0) * ((vehicle.interestRate || 0) / 100)) / 12)}</span>
               </p>
               <p>
                 <span>Annual Interest:</span>
-                <span>${((vehicle.loanBalance || 0) * (vehicle.interestRate || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                <span>${((vehicle.loanBalance || 0) * (vehicle.interestRate || 0) / 100)}</span>
               </p>
               <p>
                 <span>Months to pay off:</span>
@@ -691,7 +709,7 @@ const FinanceNavigation = () => {
                     const totalPayments = payment * months;
                     const totalInterest = totalPayments - balance;
                     
-                    return totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return totalInterest;
                   })()}
                 </span>
               </p>
@@ -709,16 +727,16 @@ const FinanceNavigation = () => {
     {recurringExpenses.expenses.map((item, index) => (
       <p key={index}>
         <span>{item.name} ({item.frequency}):</span>
-        <span>${item.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        <span>${item.cost}</span>
       </p>
     ))}
     <p>
       <span>Monthly Equivalent:</span>
-      <span>${(recurringExpenses.summary?.monthlyTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${(recurringExpenses.summary?.monthlyTotal || 0)}</span>
     </p>
     <p>
       <span>Annual Equivalent:</span>
-      <span>${(recurringExpenses.summary?.annualTotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${(recurringExpenses.summary?.annualTotal || 0)}</span>
     </p>
     <p>
       <span>Total Services:</span>
@@ -732,23 +750,23 @@ const FinanceNavigation = () => {
     <h3>Monthly Cash Flow</h3>
     <p>
       <span>Income:</span>
-      <span>${summary.totalNetPay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>${summary.totalNetPay}</span>
     </p>
     <p>
       <span>Housing:</span>
-      <span>-${(housingExpenses?.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${(housingExpenses?.totalMonthlyExpenses || 0)}</span>
     </p>
     <p>
       <span>Transportation:</span>
-      <span>-${(transportExpenses?.totalMonthlyExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${(transportExpenses?.totalMonthlyExpenses || 0)}</span>
     </p>
     <p>
       <span>Debt Payments:</span>
-      <span>-${(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0)}</span>
     </p>
     <p>
       <span>Savings Contributions:</span>
-      <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      <span>-${(postTaxContributions?.total_contributions || 0)}</span>
     </p>
     <p className="remaining">
       <span>Remaining:</span>
@@ -758,7 +776,7 @@ const FinanceNavigation = () => {
         (transportExpenses?.totalMonthlyExpenses || 0) -
         (debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0) -
         (postTaxContributions?.total_contributions || 0)
-      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+      )}</span>
     </p>
   </div>
 )}

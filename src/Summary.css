@@ -1,0 +1,125 @@
+/* Card container */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-width: 40%;
+}
+
+/* Hover effect */
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Card header */
+.card-header {
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+}
+
+/* Card title */
+.card-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+/* Card content */
+.card-content {
+  color: #333;
+}
+
+/* Card footer */
+.card-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* For cards with images */
+.card-img {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.flex {
+    display: flex;
+    justify-content: space-around;
+}
+
+.flexColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.account-item {
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+  
+  .account-main {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .account-contributions {
+    padding-left: 15px;
+    font-size: 0.9em;
+  }
+  
+  .contribution-item {
+    margin-top: 5px;
+  }
+  
+  .monthly-contribution, .annual-contribution {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .account-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  
+  .contributions-container {
+    margin-top: 5px;
+    padding-left: 10px;
+  }
+  
+  .contribution-label {
+    font-size: 0.9em;
+    color: #666;
+  }
+  .account-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .contributions-container {
+    margin-top: 8px;
+    padding-left: 15px;
+    width: 100%;
+  }
+  
+  .contribution-row {
+    font-size: 0.9em;
+    color: #666;
+  }
+
+  .label-txt {
+    color: #666;
+    font-size: 0.9em;
+  }

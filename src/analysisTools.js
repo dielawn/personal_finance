@@ -1,3 +1,5 @@
+
+
 // calc savings rate
 function calcSavingsRate(payStubSummary, ira, savings) {
     const totalPayPeriodSavings = payStubSummary.preTaxSavings + ira + savings
