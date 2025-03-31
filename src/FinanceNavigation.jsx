@@ -45,10 +45,10 @@ const FinanceNavigation = () => {
     //   console.log(debtList.length)
     // }
 
-    if (payStubData) {
-      console.log('payInterval:', payStubData[0].payInterval);
+    if (postTaxContributions) {
+      console.log('ira:', postTaxContributions.accounts[0].amount);
     }
-}, [payStubData])
+}, [postTaxContributions])
 
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
@@ -375,18 +375,121 @@ const FinanceNavigation = () => {
           </div>
           
           {acctBalanceData && (
-            <div className="summary-section">
-              <h3>Account Balances</h3>
-              <p>Total Assets: ${acctBalanceData.totalAssets?.toFixed(2) || '0.00'}</p>
-              <div className="accounts-list">
-                {acctBalanceData.accountsList?.map(account => (
-                  <div key={account.id} className="account-item">
-                    <span>{account.label}:</span> <span>${account.value.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+  <div className="summary-section">
+    <h3>Account Balances</h3>
+    <p>
+      <span>Total Assets: </span>
+      <span>${(acctBalanceData.totalAssets || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>              
+    </p>
+    <div className="accounts-list">
+      {acctBalanceData.accountsList?.map(account => (
+        <div key={account.id} className="account-item">
+          <span>{account.label}:</span> <span>${account.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{postTaxContributions && payStubData &&
+  <div className="summary-section">
+    <h3>Pre Tax Savings Contributions</h3>
+    <h4>Pay Period Contributions</h4>
+    <p>
+      <span>Total Pre Tax Contributions</span>
+      <span>-${(payStubData[0]?.retirement401k + payStubData[0]?.hsa || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>401k Contributions:</span>
+      <span>-${(payStubData[0]?.retirement401k || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Health Savings Account (HSA):</span>
+      <span>-${(payStubData[0]?.hsa || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    
+    {/* Monthly pre-tax contributions */}
+    <h4>Monthly Contributions</h4>
+    <p>
+      <span>Monthly 401k Contributions:</span>
+      <span>-${((payStubData[0]?.retirement401k || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Monthly HSA Contributions:</span>
+      <span>-${((payStubData[0]?.hsa || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    
+    {/* Annual pre-tax contributions */}
+    <h4>Annual Contributions</h4>
+    <p>
+      <span>Annual 401k Contributions:</span>
+      <span>-${((payStubData[0]?.retirement401k || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+    <p>
+      <span>Annual HSA Contributions:</span>
+      <span>-${((payStubData[0]?.hsa || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+    </p>
+  <p>
+    <span>Pre Tax Savings Rate</span>
+    <span>{(((payStubData[0]?.retirement401k + payStubData[0]?.hsa ) / payStubData[0].grossPay) * 100|| 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>
+  </p>
+
+    
+   {/* Post Tax Savings Contributions section */}
+<h3>Post Tax Savings Contributions</h3>
+<h4>Pay Period Contributions</h4>
+<p>
+  <span>Total Savings Contributions:</span>
+  <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+
+{/* Individual post-tax accounts */}
+<p>
+  <span>IRA Contributions:</span>
+  <span>-${(postTaxContributions?.accounts[1].amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+<p>
+  <span>Savings Account Contributions:</span>
+  <span>-${(postTaxContributions?.accounts[0].amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+
+{/* Monthly post-tax contributions */}
+<h4>Monthly Contributions</h4>
+<p>
+  <span>Monthly IRA Contributions:</span>
+  <span>-${((postTaxContributions?.accounts[1].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+<p>
+  <span>Monthly Savings Account Contributions:</span>
+  <span>-${((postTaxContributions?.accounts[0].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+<p>
+  <span>Monthly Total Contributions:</span>
+  <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+
+{/* Annual post-tax contributions */}
+<h4>Annual Contributions</h4>
+<p>
+  <span>Annual IRA Contributions:</span>
+  <span>-${((postTaxContributions?.accounts[1].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+<p>
+  <span>Annual Savings Account Contributions:</span>
+  <span>-${((postTaxContributions?.accounts[0].amount || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+<p>
+  <span>Annual Total Contributions:</span>
+  <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+</p>
+
+<p>
+  <span>Post Tax Savings Rate</span>
+  <span>{(((postTaxContributions?.accounts[0].amount + postTaxContributions?.accounts[1].amount ) / payStubData[0].netPay) * 100|| 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%</span>
+</p>
+  </div>
+}
+
+
           
           {debtList && debtList.length > 0 && (
   <div className="summary-section">
@@ -433,27 +536,7 @@ const FinanceNavigation = () => {
     </p>
   </div>
 )}
-{postTaxContributions && 
-  <div className="summary-section">
-    <h3>Savings Contributions Post Tax</h3>
-    <p>
-      <span>Total Savings Contributions:</span>
-      <span>-${(postTaxContributions?.total_contributions || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-    </p>
-    
-    {payStubData.payInterval !== 'monthly' && (
-      <p>
-        <span>Monthly Savings Contributions:</span>
-        <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).monthly).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-      </p>
-    )}
-    
-    <p>
-      <span>Annual Savings Contributions:</span>
-      <span>-${((postTaxContributions?.total_contributions || 0) * getPayIntervalMultipliers(payStubData[0].payInterval).annual).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-    </p>
-  </div>
-}
+
 {housingExpenses && (
   <div className="summary-section">
     <h3>Housing</h3>
