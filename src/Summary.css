@@ -54,6 +54,7 @@
 .flex {
     display: flex;
     justify-content: space-around;
+    flex-wrap: wrap;
 }
 
 .flexColumn {
@@ -121,5 +122,23 @@
 
   .label-txt {
     color: #666;
+    font-size: 0.9em;
+  }
+
+  .sub-acct {
+    padding-left: 40px;
+  }
+
+  .sub-acct-value {
+    padding-right: 40px;
+    font-weight: 550;
+    color:#2a7de1;
+  }
+
+  .acct-name {
+    font-weight: 800;
+  }
+
+  .acct-label {
     font-size: 0.9em;
   }

@@ -419,40 +419,14 @@ const FinanceNavigation = () => {
   </div>
 )}
           </div>
-          <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} />
-          {/* {acctBalanceData && (
-  <div className="summary-section">
-    <h3>Account Balances</h3>
-   
-    <div className="accounts-list">
-      {acctBalanceData.accountsList?.map(account => (
-        <div key={account.id} className="account-item">
-          <span>{account.label}:</span> 
-          {account.id === '_401kBalance' ? 
-          <span>{formatCurrency(account.value)}</span> 
-          : 
-          <span>${formatCurrency(account.value)}</span>}
-        </div>
-      ))}
-    </div>
-    <p>
-      <span>Total Assets: </span>
-      <span>${formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
-    </p>
-  </div>
-)} */}
+          <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
+        
 {postTaxContributions && payStubData &&
   <div className="summary-section">
     <h3>Pre Tax Savings Contributions</h3>
     <h4>Pay Period Contributions</h4>
-    <p>
-      <span>Total Pre Tax Contribution</span>
-      <span>-${formatCurrency(preTaxTotal)}</span>
-    </p>
-    <p>
-      <span>401k Contribution:</span>
-      <span>-${formatCurrency(contribution401k)}</span>
-    </p>
+    
+    
     <p>
       <span>Health Savings Account (HSA):</span>
       <span>-${formatCurrency(hsa)}</span>
