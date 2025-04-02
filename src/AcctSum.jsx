@@ -4,43 +4,29 @@ import { handlePayInterval, formatCurrency } from './utils/utils';
 import { getPayIntervalMultipliers } from './utils/utils';
 
 const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) => {
+    const [preTaxRateGoal, setPreTaxRateGoal] = useState(false);
+    const [postTaxRateGoal, setPostTaxRateGoal] = useState(false);
+
     // Multipliers for different time periods
     const payInterval = payStubData[0].payInterval;
     const multipliers = getPayIntervalMultipliers(payInterval)
-
+    
     //Pre tax accounts    
     const _401kCont = handlePayInterval(payStubData[0].retirement401k, payInterval);
     const _401kMatch = handlePayInterval(payStubData[0].match401k, payInterval);
     const hsaCont = handlePayInterval(payStubData[0].hsa, payInterval);
     
     //Post tax accounts
-    // Annual post-tax values
-    const totalPostTaxContributions = postTaxContributions?.total_contributions || 0;
     const iraContribution = handlePayInterval(postTaxContributions?.accounts[1]?.amount, payInterval);
     const savingsAcctContribution = handlePayInterval(postTaxContributions?.accounts[0]?.amount, payInterval);
     
     const totalSavings = _401kCont.annualPay + hsaCont.annualPay + iraContribution.annualPay + savingsAcctContribution.annualPay
-    // Monthly post-tax values
-    const monthlyIraContributions = iraContribution.monthlyPay;
-    const monthlySavingsAcctContributions = savingsAcctContribution.monthlyPay;
-    const monthlyTotalPostTaxContributions = totalPostTaxContributions;
-    
-    // Annual post-tax values
-    const annualIraContributions = iraContribution.annualPay;
-    const annualSavingsAcctContributions = savingsAcctContribution.annualPay;
-    const annualTotalPostTaxContributions = totalPostTaxContributions;
-    
-    // Calculate pre-tax total (assuming this is what you want)
-    const totalPreTaxContributions = _401kCont?.annualPay + hsaCont?.annualPay;
-    
-    // These would need to be passed in or calculated
-    const grossPay = handlePayInterval(payStubData[0]?.grossPay, payInterval) || 0;
-  
+          
+    const grossPay = handlePayInterval(payStubData[0]?.grossPay, payInterval) || 0;  
     const netPay = handlePayInterval(payStubData[0]?.netPay, payInterval) || 0;
     
     // Savings Rate calculations
     const preTaxSavingsRate = (totalSavings / grossPay.annualPay * 100 || 0);
-
     const postTaxSavingsRate = (totalSavings / netPay.annualPay) * 100 || 0;
  
     // Create a modified accounts array without mutating the original data
@@ -51,8 +37,8 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
         // Add savings account contribution (assuming index 0 is savings account)
         if (index === 1) {
             enhancedAccount.contribution = {
-                monthlyPay: monthlySavingsAcctContributions,
-                annualPay: annualSavingsAcctContributions
+                monthlyPay: savingsAcctContribution.monthlyPay,
+                annualPay: savingsAcctContribution.annualPay
             };
             // Add an empty match property with zero values
             enhancedAccount.match = {
@@ -61,11 +47,11 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
             };
         }
         
-        // Add IRA contribution (assuming index 1 is IRA)
+        // Add IRA contribution 
         if (index === 2) {
             enhancedAccount.contribution = {
-                monthlyPay: monthlyIraContributions,
-                annualPay: annualIraContributions
+                monthlyPay: iraContribution.monthlyPay,
+                annualPay: iraContribution.annualPay
             };
             // Add an empty match property with zero values
             enhancedAccount.match = {
@@ -74,7 +60,7 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
             };
         }
         
-        // Add HSA contribution to index 3 (assuming this is the HSA account)
+        // Add HSA contribution
         if (index === 3) {
             enhancedAccount.contribution = hsaCont;
             // Add an empty match property with zero values to HSA
@@ -84,7 +70,7 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
             };
         }
         
-        // Add 401k contributions to index 4 (assuming this is the 401k account)
+        // Add 401k contributions
         if (index === 4) {
             enhancedAccount.match = _401kMatch;
             enhancedAccount.contribution = _401kCont;
@@ -93,22 +79,39 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
         return enhancedAccount;
     });
 
+    function checkGoals(savingsRate, setter) {
+
+        // Goal pre tax savings rate >= 20%
+        if (savingsRate >= 20) {
+            //Goal met
+            setter(true);
+        } else {
+            setter(false)
+        }
+
+
+    }
+
+    useEffect(() => {
+        checkGoals(preTaxSavingsRate, setPreTaxRateGoal)
+        checkGoals(postTaxSavingsRate, setPostTaxRateGoal)
+    })
+
     useEffect(() => {
         console.log('accts', acctBalanceData);
         console.log('enhanced accounts', enhancedAccounts);
         console.log('HSA cont', hsaCont);
         console.log('Post-tax contributions', postTaxContributions);
         console.log('IRA contribution', {
-            monthly: monthlyIraContributions,
-            annual: annualIraContributions
+            monthly: iraContribution.monthlyPay,
+            annual: iraContribution.annualPay
         });
         console.log('Savings account contribution', {
-            monthly: monthlySavingsAcctContributions,
-            annual: annualSavingsAcctContributions
+            monthly: savingsAcctContribution.monthlyPay,
+            annual: savingsAcctContribution.annualPay
         });
         
        console.log('gross net', grossPay, netPay)
-        console.log('pre', totalPreTaxContributions, 'post', totalPostTaxContributions)
     }, [acctBalanceData, postTaxContributions]);
 
     return (
@@ -187,13 +190,14 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
             {/* Optional: Display Savings Rates */}
             <div className="savings-rates card">
                 <h4>Savings Rates</h4>
+                <p>Goal save at least 20% of your pre tax income</p>
                 <p className="account-row">
                     <span>Pre-Tax Savings Rate:</span>
-                    <span>{preTaxSavingsRate.toFixed(2)}%</span>
+                    <span>{preTaxSavingsRate.toFixed(2)}%{preTaxRateGoal?' ✅':' ❌'}</span>
                 </p>
                 <p className="account-row">
                     <span>Post-Tax Savings Rate:</span>
-                    <span>{postTaxSavingsRate.toFixed(2)}%</span>
+                    <span>{postTaxSavingsRate.toFixed(2)}%{postTaxRateGoal?' ✅':' ❌'}</span>
                 </p>
             </div>
         </div>

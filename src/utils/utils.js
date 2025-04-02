@@ -65,9 +65,14 @@ const formatCurrency = (amount) => {
       minimumFractionDigits: 2
     }).format(amount);
   };
+  const formatPercent = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatMonths = (value) =>value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
   export {
     getPayIntervalMultipliers,
     getColorClass,
     handlePayInterval, 
-    formatCurrency
+    formatCurrency,
+    formatPercent,
+    formatMonths
   }

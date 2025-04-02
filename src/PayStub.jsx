@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PayStub.css';
-import { formatCurrency } from './utils';
+import { formatCurrency } from './utils/utils';
 
 const PayStub = ({ id, label = "Pay Stub", setPayStubData, initialData }) => {
   // Default form data

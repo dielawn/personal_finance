@@ -1,4 +1,10 @@
+import './FinanceNavigation.css';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { formatCurrency, formatMonths, formatPercent } from './utils/utils.js';
+import { getPayIntervalMultipliers, getColorClass } from './utils/utils.js';
+import useLocalStorage from './hooks/useLocalStorage';
+import ExportButtons from './ExportButtons';
+// Forms
 import PayStub from './PayStub';
 import AccountBalanceForm from './AccountBalanceForm';
 import DebtTrackerForm from './DebtTrackerForm';
@@ -7,12 +13,10 @@ import TransportExpenses from './TransportExpenses';
 import PersonalExpenses from './PersonalExpenses';
 import RecurringExpenses from './RecurringExpenses';
 import PostTaxSavings from './PostTaxSavings';
-import './FinanceNavigation.css';
-import useLocalStorage from './hooks/useLocalStorage';
-import ExportButtons from './ExportButtons';
-import { getPayIntervalMultipliers, getColorClass } from './utils/utils.js';
+// Summaries
 import PayStubSummary from './PayStubSum.jsx';
 import AccountsSummary from './AcctSum.jsx';
+import DebtSummary from './DebtSum.jsx';
 
 const FinanceNavigation = () => {
   // State for all the financial data with useLocalStorage integration
@@ -36,71 +40,6 @@ const FinanceNavigation = () => {
   const [progress, setProgress] = useState(0);
   // Prevent multiple updates
   const updateInProgress = React.useRef(false);
-
-  //pay stub
-  const preTaxTotal = (payStubData[0]?.retirement401k || 0) + payStubData[0]?.hsa || 0;
-
-  const contribution401k = payStubData[0]?.retirement401k || 0
-  const hsa = payStubData[0]?.hsa || 0
-
-  const multipliers = getPayIntervalMultipliers(payStubData[0].payInterval);
-
-  const monthly401kContributions = contribution401k * multipliers.monthly
-  const monthlyHsaContributions = hsa * multipliers.monthly
-
-
-  const annual401kContributions = contribution401k * multipliers.annual;
-  const annualHsaContributions = hsa * multipliers.annual;
-
-  const grossPay = payStubData[0].grossPay;
-  const netPay = payStubData[0].netPay
-  
-
-  // Annual post-tax values
-  const totalPostTaxContributions = postTaxContributions?.total_contributions || 0;
-  const iraContribution = postTaxContributions?.accounts[1]?.amount || 0;
-  const savingsAcctContribution = postTaxContributions?.accounts[0]?.amount || 0;
-  
-  // Monthly post-tax values
-  const monthlyIraContributions = iraContribution * multipliers.monthly;
-  const monthlySavingsAcctContributions = savingsAcctContribution * multipliers.monthly;
-  const monthlyTotalPostTaxContributions = totalPostTaxContributions * multipliers.monthly;
-  
-  // Annual post-tax values
-  const annualIraContributions = iraContribution * multipliers.annual;
-  const annualSavingsAcctContributions = savingsAcctContribution * multipliers.annual;
-  const annualTotalPostTaxContributions = totalPostTaxContributions * multipliers.annual;
-  
-  // Savings Rate
-  const preTaxSavingsRate = ((
-    preTaxTotal + totalPostTaxContributions) / grossPay) * 100 || 0;
-
-  const postTaxSavingsRate = ((
-    totalPostTaxContributions + preTaxTotal) / netPay) * 100 || 0;
-
-    // Debt
-  const totalDebt = debtList.reduce((sum, debt) => sum + debt.balance, 0);
-  const totalMinMonthlyPayment = debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0)
-  const totalMinAnnualPayment =  totalMinMonthlyPayment * 12
-  const monthsUntilPaidOff = debtList.reduce((sum, debt) => (sum + debt.balance) / debt.minimumPayment, 0)
-  const annualInterest = debtList.reduce((sum, debt) => sum + (debt.balance * debt.interestRate / 100), 0)
-  const monthlyInterest = annualInterest / 12 || 0;
-
-  const totalInterest = debtList.reduce((totalInterest, debt) => {
-    const monthlyRate = (debt.interestRate / 100) / 12;
-    if (monthlyRate === 0 || debt.minimumPayment <= 0) return totalInterest;
-    
-    // Calculate how many months to pay off
-    const months = Math.log(debt.minimumPayment / (debt.minimumPayment - monthlyRate * debt.balance)) / Math.log(1 + monthlyRate);
-    
-    // Calculate total payments
-    const totalPayments = debt.minimumPayment * months;
-    
-    // Total interest is total payments minus the principal
-    const total = totalInterest.balance + (totalPayments - debt.balance)
-        
-    return total;
-  });
 
   // Housing, utilities
   const monthlyHousingExp = housingExpenses.totalMonthlyExpenses || 0;
@@ -127,26 +66,6 @@ const FinanceNavigation = () => {
   const monthlyTransportExp = transportExpenses.totalMonthlyExpenses || 0;
   const annualTransportExp = (transportExpenses.totalMonthlyExpenses || 0) * 12;
   const numberOfVehicles = transportExpenses.details.vehicles.length;
-
-
-  // Format all numbers for display
-   const formatCurrency = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-   const formatPercent = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-   const formatMonths = (value) =>value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-
-  useEffect(() => {
-    // if (debtList && debtList.length > 0) {
-    //   // Commented out line to log each debt's name and interest rate
-    //   debtList.map((debt) => console.log( debt.interestRate))
-      
-    //   // Currently, it just logs the length of the debtList array
-    //   console.log(debtList.length)
-    // }
-
-    if (preTaxSavingsRate) {
-      console.log('pre tax sav cd', contribution401k, hsa, postTaxContributions.total_contributions);
-    }
-}, [preTaxSavingsRate])
 
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
@@ -421,104 +340,11 @@ const FinanceNavigation = () => {
           </div>
           <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
         
-{postTaxContributions && payStubData &&
-  <div className="summary-section">
-    <h3>Pre Tax Savings Contributions</h3>
-    <h4>Pay Period Contributions</h4>
-    
-    
-    <p>
-      <span>Health Savings Account (HSA):</span>
-      <span>-${formatCurrency(hsa)}</span>
-    </p>
-    
-    {/* Monthly pre-tax contributions */}
-    <h4>Monthly Contributions</h4>
-    <p>
-      <span>Monthly 401k Contributions:</span>
-      <span>-${formatCurrency(monthly401kContributions)}</span>
-    </p>
-    <p>
-      <span>Monthly HSA Contributions:</span>
-      <span>-${formatCurrency(monthlyHsaContributions)}</span>
-    </p>
-    
-    {/* Annual pre-tax contributions */}
-    <h4>Annual Contributions</h4>
-    <p>
-      <span>Annual 401k Contributions:</span>
-      <span>-${formatCurrency(annual401kContributions)}</span>
-    </p>
-    <p>
-      <span>Annual HSA Contributions:</span>
-      <span>-${formatCurrency(annualHsaContributions)}</span>
-    </p>
-   
-    <p className={getColorClass(preTaxSavingsRate)}>
-      <span>Pre Tax Savings Rate <em>(401k + HSA + IRA + Savings Account) / Gross Pay</em></span>
-      <span>{formatPercent(preTaxSavingsRate)}%</span>
-    </p>
-     
-   {/* Post Tax Savings Contributions section */}
-<h3>Post Tax Savings Contributions</h3>
-<h4>Pay Period Contributions</h4>
-<p>
-  <span>Total Savings Contributions:</span>
-  <span>-${formatCurrency(totalPostTaxContributions)}</span>
-</p>
 
-{/* Individual post-tax accounts */}
-<p>
-  <span>IRA Contributions:</span>
-  <span>-${formatCurrency(iraContribution)}</span>
-</p>
-<p>
-  <span>Savings Account Contributions:</span>
-  <span>-${formatCurrency(savingsAcctContribution)}</span>
-</p>
-
-{/* Monthly post-tax contributions */}
-<h4>Monthly Contributions</h4>
-<p>
-  <span>Monthly IRA Contributions:</span>
-  <span>-${formatCurrency(monthlyIraContributions)}</span>
-</p>
-<p>
-  <span>Monthly Savings Account Contributions:</span>
-  <span>-${formatCurrency(monthlySavingsAcctContributions)}</span>
-</p>
-<p>
-  <span>Monthly Total Contributions:</span>
-  <span>-${formatCurrency(monthlyTotalPostTaxContributions)}</span>
-</p>
-
-{/* Annual post-tax contributions */}
-<h4>Annual Contributions</h4>
-<p>
-  <span>Annual IRA Contributions:</span>
-  <span>-${formatCurrency(annualIraContributions)}</span>
-</p>
-<p>
-  <span>Annual Savings Account Contributions:</span>
-  <span>-${formatCurrency(annualSavingsAcctContributions)}</span>
-</p>
-<p>
-  <span>Annual Total Contributions:</span>
-  <span>-${formatCurrency(annualTotalPostTaxContributions)}</span>
-</p>
-
-
-    <p className={getColorClass(postTaxSavingsRate)}>
-      <span>Post Tax Savings Rate <em>(401k + HSA + IRA + Savings Account) / Net Pay</em></span>
-      <span>{formatPercent(postTaxSavingsRate)}%</span>
-    </p>
-
-  </div>
-}
-
+<DebtSummary debtList={debtList} />
 
           
-          {debtList && debtList.length > 0 && (
+          {/* {debtList && debtList.length > 0 && (
   <div className="summary-section">
     <h3>Debts</h3>
     <p>
@@ -550,7 +376,7 @@ const FinanceNavigation = () => {
       <span>${formatCurrency(totalInterest)}</span>
     </p>
   </div>
-)}
+)} */}
 
 {housingExpenses && (
   <div className="summary-section">
