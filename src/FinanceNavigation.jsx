@@ -338,45 +338,11 @@ const FinanceNavigation = () => {
   </div>
 )}
           </div>
-          <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
-        
-
-<DebtSummary debtList={debtList} />
+<AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
+<DebtSummary debtList={debtList} payStubData={payStubData} housingExpenses={housingExpenses} />
 
           
-          {/* {debtList && debtList.length > 0 && (
-  <div className="summary-section">
-    <h3>Debts</h3>
-    <p>
-      <span>Total Debt:</span> 
-      <span>${formatCurrency(totalDebt)}</span>
-    </p>
-    <p>
-      <span>Total Minimum Monthly Payment:</span> 
-      <span>${formatCurrency(totalMinMonthlyPayment)}</span>
-    </p>
-    <p>
-      <span>Total Annual Minimum Payment:</span>
-      <span>${formatCurrency(totalMinAnnualPayment)}</span>
-    </p>
-    <p>    
-      <span>Months to pay off:</span>     
-      <span>{formatMonths(monthsUntilPaidOff)}</span>     
-    </p> 
-    <p>
-      <span>Monthly Interest:</span>
-      <span>${formatCurrency(monthlyInterest)}</span>
-    </p>
-    <p>
-      <span>Annual Interest:</span>
-      <span>${formatCurrency(annualInterest)}</span>
-    </p>
-    <p>
-      <span>Total Interest:</span>
-      <span>${formatCurrency(totalInterest)}</span>
-    </p>
-  </div>
-)} */}
+        
 
 {housingExpenses && (
   <div className="summary-section">
