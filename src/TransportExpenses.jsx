@@ -340,6 +340,7 @@ const TransportExpenses = ({ setTransportExpenses, initialData }) => {
       }
     };
 
+    
 
     return (
       <div className="transport-expenses-container">

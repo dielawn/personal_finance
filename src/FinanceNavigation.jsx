@@ -1,6 +1,13 @@
 import './FinanceNavigation.css';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { formatCurrency, formatMonths, formatPercent } from './utils/utils.js';
+import { 
+  formatCurrency, 
+  formatMonths, 
+  formatPercent, 
+  monthsToPaidOff, 
+  calcTotalInterest, 
+  calcMonthlyInterest
+} from './utils/utils.js';
 import { getPayIntervalMultipliers, getColorClass } from './utils/utils.js';
 import useLocalStorage from './hooks/useLocalStorage';
 import ExportButtons from './ExportButtons';
@@ -44,23 +51,15 @@ const FinanceNavigation = () => {
   // Housing, utilities
   const monthlyHousingExp = housingExpenses.totalMonthlyExpenses || 0;
   const annualHousingExp = (housingExpenses.totalMonthlyExpenses || 0) * 12
-  const mortgageMonthlyExp = ((housingExpenses.housingDetails.mortgageBalance || 0) * ((housingExpenses.housingDetails.interestRate || 0) / 100)) / 12
-  const annualMortgageExp = (housingExpenses.housingDetails.mortgageBalance || 0) * (housingExpenses.housingDetails.interestRate || 0) / 100;
+  const mortgageMonthlyExp = calcMonthlyInterest(housingExpenses.housingDetails.mortgageBalance, housingExpenses.housingDetails.interestRate)
+  const annualMortgageExp = mortgageMonthlyExp * 12;
   const mortgageBalance = housingExpenses.housingDetails.mortgageBalance || 0;
   const mortgagePayment = housingExpenses.housingDetails.monthlyPayment || 0;
   const mortgageRate = housingExpenses.housingDetails.interestRate || 0;
   const monthlyRate = (mortgageRate / 100) / 12;
   const monthsMortgagePaidOff = Math.log(mortgagePayment / (mortgagePayment - monthlyRate * mortgageBalance)) / Math.log(1 + monthlyRate) || 0;
   
-  const totalMortgageInterest = () => {      
-    if (mortgageRate === 0 || mortgagePayment <= 0) return "0.00";
-    
-    const months = Math.log(mortgagePayment / (mortgagePayment - monthlyRate * mortgageBalance)) / Math.log(1 + monthlyRate);
-    const totalPayments = mortgagePayment * months;
-    const totalInterest = totalPayments - mortgageBalance;
 
-    return formatCurrency(totalInterest);
-  }
 
   // Transportation, vehicle loans, insurance, maintenance, fuel
   const monthlyTransportExp = transportExpenses.totalMonthlyExpenses || 0;
@@ -120,7 +119,7 @@ const FinanceNavigation = () => {
     if (updateInProgress.current) return;
     updateInProgress.current = true;
     
-    console.log('Updating transport expenses');
+    console.log('Updating transport expenses', newData);
     setTransportExpenses(newData);
     
     setTimeout(() => {
@@ -163,6 +162,53 @@ const FinanceNavigation = () => {
       updateInProgress.current = false;
     }, 100);
   }, [setPostTaxContributions]);
+
+  useEffect(() => {
+    let housingDebtDetail = [];
+    let autoDebtDetail = [];
+    
+    // Add mortgage if homeowner
+    if (housingExpenses && housingExpenses.housingType === 'own') {  
+      const {mortgageBalance, interestRate, monthlyPayment} = housingExpenses.housingDetails;
+    
+      const mortgageDetail = {
+        accountName: 'Mortgage', 
+        balance: mortgageBalance, 
+        interestRate,
+        minimumPayment: monthlyPayment
+      };
+      housingDebtDetail = [mortgageDetail];
+    }
+    
+    // Add vehicle loans
+    if (transportExpenses && transportExpenses.details && transportExpenses.details.vehicles) {
+      autoDebtDetail = transportExpenses.details.vehicles
+        .filter(vehicle => vehicle.paymentStatus === 'making-payments')
+        .map(vehicle => {
+          const {name, loanBalance, interestRate, vehiclePayment} = vehicle;
+          return {
+            accountName: name,
+            balance: loanBalance,
+            interestRate,
+            minimumPayment: vehiclePayment
+          };
+        });
+    }
+  
+    // Combine existing debt with housing and auto debt
+    // Avoid duplicates by filtering out entries that might already exist
+    const existingDebtNames = debtList.map(debt => debt.accountName);
+    const newHousingDebt = housingDebtDetail.filter(debt => !existingDebtNames.includes(debt.accountName));
+    const newAutoDebt = autoDebtDetail.filter(debt => !existingDebtNames.includes(debt.accountName));
+    
+    const updatedDebtList = [...debtList, ...newHousingDebt, ...newAutoDebt];
+    
+    // Only update if there are actual changes
+    if (newHousingDebt.length > 0 || newAutoDebt.length > 0) {
+      handleDebtListUpdate(updatedDebtList);
+    }
+    
+  }, [housingExpenses, transportExpenses, debtList, handleDebtListUpdate]);
 
   // Memoize the welcome screen component to prevent unnecessary re-renders
   const welcomeScreenComponent = useMemo(() => (
@@ -264,15 +310,6 @@ const FinanceNavigation = () => {
       />
     },
     {
-      id: 'debts',
-      title: 'Debts',
-      description: 'Track your debts and loans',
-      component: <DebtTrackerForm 
-        setAcctBalanceData={handleDebtListUpdate}
-        initialData={debtList}
-      />
-    },
-    {
       id: 'housing',
       title: 'Housing',
       description: 'Enter your housing expenses',
@@ -288,6 +325,16 @@ const FinanceNavigation = () => {
       component: <TransportExpenses 
         setTransportExpenses={handleTransportExpensesUpdate}
         initialData={transportExpenses}
+      />
+    },
+    {
+      id: 'debts',
+      title: 'Debts',
+      description: 'Track your debts and loans',
+      component: <DebtTrackerForm 
+        setAcctBalanceData={handleDebtListUpdate}
+        initialData={debtList}
+
       />
     },
     {
@@ -349,23 +396,23 @@ const FinanceNavigation = () => {
     <h3>Housing</h3>
     <p>
       <span>Monthly Housing Expenses:</span>
-      <span>${formatCurrency(monthlyHousingExp)}</span>
+      <span>{formatCurrency(monthlyHousingExp)}</span>
     </p>
     <p>
       <span>Annual Housing Expenses:</span>
-      <span>${formatCurrency(annualHousingExp)}</span>
+      <span>{formatCurrency(annualHousingExp)}</span>
     </p>
     
     {housingExpenses.housingType === 'own' && housingExpenses.housingDetails && housingExpenses.housingDetails.monthlyPayment > 0 && (
       <>
         <p>
           <span>Monthly Mortgage Interest:</span>
-          <span>${formatCurrency(mortgageMonthlyExp)}</span>
+          <span>{formatCurrency(mortgageMonthlyExp)}</span>
 
         </p>
         <p>
           <span>Annual Mortgage Interest:</span>
-          <span>${formatCurrency(annualMortgageExp)}</span>
+          <span>{formatCurrency(annualMortgageExp)}</span>
         </p>
         <p>
           <span>Months to pay off:</span>
@@ -376,7 +423,7 @@ const FinanceNavigation = () => {
         <p>
           <span>Total Mortgage Interest:</span>
           <span>
-            ${totalMortgageInterest()}
+            {calcTotalInterest(mortgageBalance, mortgagePayment, mortgageRate)}
           </span>
         </p>
       </>
@@ -388,11 +435,11 @@ const FinanceNavigation = () => {
     <h3>Transportation</h3>
     <p>
       <span>Monthly Transportation Expenses:</span>
-      <span>${formatCurrency(monthlyTransportExp)}</span>
+      <span>{formatCurrency(monthlyTransportExp)}</span>
     </p>
     <p>
       <span>Annual Transportation Expenses:</span>
-      <span>${formatCurrency(annualTransportExp)}</span>
+      <span>{formatCurrency(annualTransportExp)}</span>
     </p>
     
     {transportExpenses.transportMode === 'own' && transportExpenses.details && transportExpenses.details.vehicles && (
@@ -430,53 +477,27 @@ const FinanceNavigation = () => {
               <h4>Loan/Payments Data For {vehicle.name}</h4>
               <p>
                 <span>Monthly Payment:</span>
-                <span>${(vehicle.vehiclePayment || 0)}</span>
+                <span>{(formatCurrency(vehicle.vehiclePayment) || 0)}</span>
               </p>
               <p>
                 <span>Monthly Interest:</span>
-                <span>${(((vehicle.loanBalance || 0) * ((vehicle.interestRate || 0) / 100)) / 12)}</span>
+                <span>{((((vehicle.loanBalance || 0) * ((vehicle.interestRate || 0) / 100)) / 12))}</span>
               </p>
               <p>
                 <span>Annual Interest:</span>
-                <span>${((vehicle.loanBalance || 0) * (vehicle.interestRate || 0) / 100)}</span>
+                <span>{((vehicle.loanBalance || 0) * (vehicle.interestRate || 0) / 100)}</span>
               </p>
               <p>
                 <span>Months to pay off:</span>
                 <span>
-                  {(() => {
-                    const balance = vehicle.loanBalance || 0;
-                    const payment = vehicle.vehiclePayment || 0;
-                    const interestRate = vehicle.interestRate || 0;
-                    
-                    if (interestRate === 0 || payment <= 0) return "0";
-                    
-                    const monthlyRate = (interestRate / 100) / 12;
-                    const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
-                    
-                    return isFinite(months) ? months.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : "N/A";
-                  })()}
+                  {monthsToPaidOff(vehicle.loanBalance, vehicle.vehiclePayment, vehicle.interestRate)}
                 </span>
               </p>
               <p>
                 <span>Total Interest:</span>
                 <span>
-                  ${(() => {
-                    const balance = vehicle.loanBalance || 0;
-                    const payment = vehicle.vehiclePayment || 0;
-                    const interestRate = vehicle.interestRate || 0;
-                    
-                    if (interestRate === 0 || payment <= 0) return "0.00";
-                    
-                    const monthlyRate = (interestRate / 100) / 12;
-                    const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
-                    
-                    if (!isFinite(months)) return "N/A";
-                    
-                    const totalPayments = payment * months;
-                    const totalInterest = totalPayments - balance;
-                    
-                    return totalInterest;
-                  })()}
+                  {calcTotalInterest(vehicle.loanBalance, vehicle.vehiclePayment, vehicle.interestRate)}
+                  
                 </span>
               </p>
             </React.Fragment>
@@ -498,11 +519,11 @@ const FinanceNavigation = () => {
     ))}
     <p>
       <span>Monthly Equivalent:</span>
-      <span>${(recurringExpenses.summary?.monthlyTotal || 0)}</span>
+      <span>{(recurringExpenses.summary?.monthlyTotal || 0)}</span>
     </p>
     <p>
       <span>Annual Equivalent:</span>
-      <span>${(recurringExpenses.summary?.annualTotal || 0)}</span>
+      <span>{(recurringExpenses.summary?.annualTotal || 0)}</span>
     </p>
     <p>
       <span>Total Services:</span>
@@ -520,23 +541,23 @@ const FinanceNavigation = () => {
     </p>
     <p>
       <span>Housing:</span>
-      <span>-${(housingExpenses?.totalMonthlyExpenses || 0)}</span>
+      <span>-{(housingExpenses?.totalMonthlyExpenses || 0)}</span>
     </p>
     <p>
       <span>Transportation:</span>
-      <span>-${(transportExpenses?.totalMonthlyExpenses || 0)}</span>
+      <span>-{(transportExpenses?.totalMonthlyExpenses || 0)}</span>
     </p>
     <p>
       <span>Debt Payments:</span>
-      <span>-${(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0)}</span>
+      <span>-{(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0)}</span>
     </p>
     <p>
       <span>Savings Contributions:</span>
-      <span>-${(postTaxContributions?.total_contributions || 0)}</span>
+      <span>-{(postTaxContributions?.total_contributions || 0)}</span>
     </p>
     <p className="remaining">
       <span>Remaining:</span>
-      <span>${(
+      <span>{(
         summary.totalNetPay -
         (housingExpenses?.totalMonthlyExpenses || 0) -
         (transportExpenses?.totalMonthlyExpenses || 0) -

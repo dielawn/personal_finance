@@ -1,0 +1,198 @@
+/* LoanAmortization.css */
+
+.loan-container {
+    padding: 1rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .loan-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  
+  .chart-wrapper {
+    width: 100%;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 0.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (min-width: 992px) {
+    .chart-wrapper {
+      width: 50%;
+    }
+  }
+  
+  .chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .loan-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .loan-table th,
+  .loan-table td {
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem;
+    text-align: left;
+  }
+  
+  .loan-table th {
+    background-color: #f7fafc;
+  }
+  
+  .loan-table tr {
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+  }
+  
+  .loan-table tr:hover {
+    background-color: #f7fafc;
+  }
+  
+  .selected-row {
+    background-color: #ebf8ff;
+  }
+
+  /* Add these styles to your existing Summary.css file */
+
+.debt-header {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .toggle-amortization-btn {
+    background-color: #2196f3;
+    color: white;
+    padding: 8px 15px;
+  }
+  
+  .toggle-amortization-btn:hover {
+    background-color: #0b7dda;
+  }
+  
+  .amortization-container {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  /* Make cards slightly larger to accommodate amortization tables */
+  .debtList .card {
+    min-width: 300px;
+    transition: all 0.3s ease;
+  }
+  
+  /* Adjust spacing when amortization is visible */
+  .debtList .card .amortization-container {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  /* Modal styles for LoanAmortization */
+
+/* Button to show amortization */
+.show-amortization-btn {
+    background-color: #2196f3;
+    color: white;
+    padding: 8px 15px;
+  }
+  
+  .show-amortization-btn:hover {
+    background-color: #0b7dda;
+  }
+  
+  /* Modal overlay - covers the entire screen with a blur effect */
+  .amortization-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  /* Modal content container */
+  .amortization-modal-content {
+    background-color: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.3s ease;
+  }
+  
+  /* Modal header with title and close button */
+  .amortization-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+  }
+  
+  .amortization-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  /* Close button */
+  .close-modal-btn {
+    background-color: #2196f3;
+    color: white;
+    padding: 8px 15px;
+  }
+  
+  .close-modal-btn:hover {
+    background-color: #0b7dda;
+  }
+  
+  /* Modal body containing the LoanAmortization component */
+  .amortization-modal-body {
+    padding: 20px;
+  }
+  
+  /* Animations */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }

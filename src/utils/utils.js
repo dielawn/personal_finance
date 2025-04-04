@@ -65,8 +65,34 @@ const formatCurrency = (amount) => {
       minimumFractionDigits: 2
     }).format(amount);
   };
-  const formatPercent = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const formatMonths = (value) =>value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const formatPercent = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+  const formatMonths = (value) => value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
+  function monthsToPaidOff(balance, payment, interestRate) {
+    if (interestRate === 0 || payment <= 0) return "0";
+    const monthlyRate = (interestRate / 100) / 12;
+    const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
+    return isFinite(months) ? formatMonths(months) : 0;
+  }
+
+  function calcTotalInterest(balance, payment, interestRate) {
+    if (interestRate === 0 || payment <= 0) return "0.00";
+    const monthlyRate = (interestRate / 100) / 12;
+    const months = Math.log(payment / (payment - monthlyRate * balance)) / Math.log(1 + monthlyRate);
+    if (!isFinite(months)) return "N/A";
+    const totalPayments = payment * months;
+    const totalInterest = totalPayments - balance;
+                    
+    return formatCurrency(totalInterest);
+  }
+
+  function calcMonthlyInterest(balance, interestRate) {
+    if (interestRate === 0 || balance === 0) return "0.00";
+    const interest = (balance * interestRate / 100) / 12;
+    return (interest)
+  }
+
+
 
   export {
     getPayIntervalMultipliers,
@@ -74,5 +100,9 @@ const formatCurrency = (amount) => {
     handlePayInterval, 
     formatCurrency,
     formatPercent,
-    formatMonths
+    formatMonths,
+    monthsToPaidOff,
+    calcTotalInterest,
+    calcMonthlyInterest,
+
   }
