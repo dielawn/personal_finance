@@ -79,29 +79,51 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
   }, [debtList]);
 
   return (        
-    <div className="summary-section">
-      <h3>Debts</h3>
-      <p>
-        <span>Total Debt:</span> 
-        <span>{formatCurrency(totalDebt)}</span>
+    <div className='debtList summary-section'>
+        <h3>Debts</h3>
+            <div className="flex">
+      
+      <p className='info-row'>
+        <span className='acct-label'>Total Debt:</span> 
+        <span className='acct-value'>{formatCurrency(totalDebt)}</span>
       </p>
-      <div className="debtList flex">
-        {debtList.map((debt, index) => (
-          <div className='card flexColumn' key={index}>
-            <div className='debt-header'>
-              <span className='acct-name'>{debt.accountName} </span>
-              <span className='acct-value'>Balance: {formatCurrency(debt.balance)}</span>
-              <span>Rate: {formatPercent(debt.interestRate)}</span>
-              <span>Monthly Interest: {formatCurrency(calcMonthlyInterest(debt.balance, debt.interestRate))}</span>
-              {debt.interestRate > 0 && <button 
-                className="show-amortization-btn"
-                onClick={() => showAmortization(index)}
-              >
-                Show Amortization
-              </button>}
-            </div>
-          </div>
-        ))}
+      <div className="flex">
+      {debtList.map((debt, index) => (
+  <div className='card flexColumn' key={index}>
+    <div className='debt-header'>
+      <span className='acct-name'>{debt.accountName}</span>
+      
+      <div className='info-row'>
+        <span className='acct-label'>Balance:</span>
+        <span className='acct-value'>{formatCurrency(debt.balance)}</span>
+      </div>
+      
+      <div className='info-row'>
+        <span className='acct-label'>Min Payment:</span>
+        <span className='acct-value'>{formatCurrency(debt.minimumPayment)}</span>
+      </div>
+      
+      <div className='info-row'>
+        <span className='acct-label'>Rate:</span>
+        <span className='acct-value'>{formatPercent(debt.interestRate)}</span>
+      </div>
+      
+      <div className='info-row'>
+        <span className='acct-label'>Monthly Interest:</span>
+        <span className='acct-value'>{formatCurrency(calcMonthlyInterest(debt.balance, debt.interestRate))}</span>
+      </div>
+      
+      {debt.interestRate > 0 && (
+        <button 
+          className="show-amortization-btn"
+          onClick={() => showAmortization(index)}
+        >
+          Show Amortization
+        </button>
+      )}
+    </div>
+  </div>
+))}
       </div>
       
       {/* Modal Overlay for Amortization Table */}
@@ -135,6 +157,10 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
           <span>Interest:</span>
           <span className='sub-acct-value'>{formatCurrency(monthlyInterest)}</span>
         </p>
+        <p className="account-row">
+            <span>Total:</span>
+            <span className="sub-acct-value">{formatCurrency(totalMinMonthlyPayment + monthlyInterest)}</span>
+        </p>
       </div>
       <div className="annual card">
         <h5>Annual</h5>
@@ -145,6 +171,10 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
         <p className="account-row">
           <span>Interest:</span>
           <span className='sub-acct-value'>{formatCurrency(annualInterest)}</span>
+        </p>
+        <p className="account-row">
+            <span>Total:</span>
+            <span className="sub-acct-value">{formatCurrency(totalMinAnnualPayment + annualInterest)}</span>
         </p>
       </div>
       <div className="total card">
@@ -158,11 +188,12 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
           <span className='sub-acct-value'>{formatCurrency(totalInterest)}</span>
         </p>
         <p className="account-row">
-          <span>Debt to Income (DTI) Ratio </span>
+          <span>Debt to Income (DTI) </span>
           <span className='sub-acct-value'>{formatPercent(debtToIncome)}</span>
         </p>
       </div>
-    </div>        
+    </div>  
+    </div>      
   );
 };
 

@@ -1,12 +1,12 @@
 /* Card container */
-.card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  margin-bottom: 16px;
+.card {  
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  min-width: 40%;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  margin: 10px;
+  min-width: 280px;
 }
 
 /* Hover effect */
@@ -135,10 +135,85 @@
     color:#2a7de1;
   }
 
-  .acct-name {
-    font-weight: 800;
-  }
 
-  .acct-label {
-    font-size: 0.9em;
+
+
+/* Style for the debt header container */
+.debt-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 8px;
+}
+
+/* Account name styling */
+.acct-name {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+  width: 100%;
+}
+
+/* Info row container for label-value pairs */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/* Style for labels - align left */
+.acct-label {
+  text-align: left;
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* Style for values - align right */
+.acct-value {
+  text-align: right;
+  font-weight: 500;
+}
+
+/* Button styling */
+.show-amortization-btn {
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  color: #0066cc;
+}
+
+.show-amortization-btn:hover {
+  background-color: #d0e7ff;
+}
+
+/* Card styles */
+.debtList .card {
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  margin: 10px;
+  min-width: 280px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .debtList {
+    flex-direction: column;
   }
+  
+  .debtList .card {
+    width: 100%;
+    margin: 10px 0;
+  }
+}
+
+.acct-card {
+  max-width: fit-content;
+  flex-wrap: nowrap;
+}

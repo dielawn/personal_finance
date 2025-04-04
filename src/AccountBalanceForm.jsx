@@ -7,9 +7,9 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
     { id: 'checkingAcct', label: 'Checking Account', value: 0, active: true },
     { id: 'savingsAcct', label: 'Savings Account', value: 0, active: true },
     { id: 'personalInvestmentAcct', label: 'Personal Investment Account', value: 0, active: false },
-    { id: 'iraBalance', label: 'IRA Account', value: 0, active: false },
-    { id: 'hsaBalance', label: 'HSA Account', value: 0, active: false },
-    { id: '_401kBalance', label: '401(k) Account', value: 0, active: false },
+    { id: 'iraBalance', label: 'IRA', value: 0, active: false },
+    { id: 'hsaBalance', label: 'HSA', value: 0, active: false },
+    { id: '_401kBalance', label: '401(k)', value: 0, active: false },
     { id: 'otherBalance', label: 'Other Investments', value: 0, active: false }
   ];
 

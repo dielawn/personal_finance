@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import './Summary.css'
-import { handlePayInterval, formatCurrency } from './utils/utils';
+import { handlePayInterval, formatCurrency, formatPercent } from './utils/utils';
 import { getPayIntervalMultipliers } from './utils/utils';
+import ProjectGrowth from './ProjectGrowth';
 
 const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) => {
     const [preTaxRateGoal, setPreTaxRateGoal] = useState(false);
@@ -125,12 +126,14 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                             <span className='acct-name'>{account.label}:</span> 
                             <span className='summary-value'>{formatCurrency(account.value)}</span>
                         </p>
-                        <div className='flex'>
+                        <div className='flexColumn'>
                    
                         {/* Show contributions if either match or contribution exists */}
                         {account.contribution && (
                             <>
-                             <div className="monthly card">
+
+                             <div className="flex acct-card">
+                             <div className="monthly card flex">
                                 <h5 className='acct-label'>Monthly</h5>
                                 <p className="account-row">
                                     <span className='sub-acct'>Contributions:</span>
@@ -153,7 +156,7 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                                 </p>
                             </div>
 
-                            <div className="annual card">
+                            <div className="annual card flex">
                                 <h5 className='acct-label'>Annual</h5>
                                 <p className="account-row">
                                     <span className='sub-acct'>Contributions:</span>
@@ -173,8 +176,17 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                                             (account.match ? account.match.annualPay : 0)
                                         )}
                                     </span>
+                                    
                                 </p>
+                                
                             </div>
+                             </div>
+                            
+                            <ProjectGrowth 
+                                        acctName={account.label}
+                                        initialBalance={account.value} 
+                                        annualContribution={account.contribution.annualPay}
+                                    />
                             </>
                         )}
                         </div>
@@ -182,24 +194,32 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                 ))}
             </div>
             
-            <p className="total-row">
-                <span>Total Assets:</span>
-                <span>{formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
-            </p>
+            
             
             {/* Optional: Display Savings Rates */}
-            <div className="savings-rates card">
+           <div className="flexColumn">
+           <div className="savings-rates card">
                 <h4>Savings Rates</h4>
-                <p>Goal save at least 20% of your pre tax income</p>
+               
+                    <p>Good advice save at least 10% of your pre tax income</p>
+                    <p>Wealth goal? Save 20% or more of your pre tax income</p>
+
+                
                 <p className="account-row">
                     <span>Pre-Tax Savings Rate:</span>
-                    <span>{preTaxSavingsRate.toFixed(2)}%{preTaxRateGoal?' ✅':' ❌'}</span>
+                    <span>{formatPercent(preTaxSavingsRate)}{preTaxRateGoal?' ✅':' ❌'}</span>
                 </p>
                 <p className="account-row">
                     <span>Post-Tax Savings Rate:</span>
-                    <span>{postTaxSavingsRate.toFixed(2)}%{postTaxRateGoal?' ✅':' ❌'}</span>
+                    <span>{formatPercent(postTaxSavingsRate)}{postTaxRateGoal?' ✅':' ❌'}</span>
                 </p>
+                <p className="account-row">
+                <span>Total Assets:</span>
+                <span>{formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
+            </p>
             </div>
+            <ProjectGrowth acctName={'All Accts'} initialBalance={acctBalanceData.totalAssets} annualContribution={totalSavings}/>
+           </div>
         </div>
     );
 };
