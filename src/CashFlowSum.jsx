@@ -89,13 +89,13 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
         if (!acctArray || !acctArray.length) return [];
         
         // Colors to cycle through (reusing from other arrays)
-        const colors = ['#8CADA7', '#A5D0A8', '#D5C76C', '#96BD99', '#F2F4CB', ];
+        const adjustedColors = colors.slice(3);
         
         // Transform the accounts data into the format needed for savingsExp
         return acctArray.map((acct, index) => {
         return {
             label: acct.name,
-            color: colors[index % colors.length], // Cycle through colors
+            color: adjustedColors[index % adjustedColors.length], // Cycle through colors
             amount: acct.calculatedAmount * multipliers.monthly || acct.amount * multipliers.monthly
         };
         });

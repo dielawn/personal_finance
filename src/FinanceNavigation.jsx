@@ -365,42 +365,58 @@ const FinanceNavigation = () => {
   </div>
 )}
           </div>
-<AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
-<DebtSummary debtList={debtList} payStubData={payStubData} housingExpenses={housingExpenses} />
-<HousingSummary housingExpenses={housingExpenses} payStubData={payStubData}/>
-<TransportSummary transportExpenses={transportExpenses} payStubData={payStubData}/>     
-<RecurringSummary recurringExpenses={recurringExpenses} />     
-<CashFlowSummary 
-  payStubData={payStubData} 
-  debtList={debtList}
-  housingExpenses={housingExpenses}
-  transportExpenses={transportExpenses}
-  personalExpenses={personalExpenses}
-  postTaxContributions={postTaxContributions}
-  summary={summary}  
-  recurringExpenses={recurringExpenses}
-/>
+      <AccountsSummary 
+        acctBalanceData={acctBalanceData} 
+        payStubData={payStubData} 
+        postTaxContributions={postTaxContributions}
+      />
+      <DebtSummary 
+        debtList={debtList} 
+        payStubData={payStubData} 
+        housingExpenses={housingExpenses} 
+      />
+      <HousingSummary 
+        housingExpenses={housingExpenses} 
+        payStubData={payStubData}
+      />
+      <TransportSummary 
+        transportExpenses={transportExpenses} 
+        payStubData={payStubData}
+      />     
+      <RecurringSummary 
+        recurringExpenses={recurringExpenses} 
+      />     
+      <CashFlowSummary 
+        payStubData={payStubData} 
+        debtList={debtList}
+        housingExpenses={housingExpenses}
+        transportExpenses={transportExpenses}
+        personalExpenses={personalExpenses}
+        postTaxContributions={postTaxContributions}
+        summary={summary}  
+        recurringExpenses={recurringExpenses}
+      />
 
-          <ExportButtons 
+      <ExportButtons 
         data={{
-          payStubData,
-          summary,
-          acctBalanceData,
-          debtList,
-          housingExpenses,
-          transportExpenses,
-          personalExpenses,
-          recurringExpenses,
-          postTaxContributions
+        payStubData,
+        summary,
+        acctBalanceData,
+        debtList,
+        housingExpenses,
+        transportExpenses,
+        personalExpenses,
+        recurringExpenses,
+        postTaxContributions
         }} 
       />
-          <div className="final-message">
-            <h3>Congratulations!</h3>
-            <p>You've completed the financial questionnaire. Use this information to make informed decisions about your financial future.</p>
-            <button onClick={() => window.print()}>Print Summary</button>
-            
-          </div>
+        <div className="final-message">
+          <h3>Congratulations!</h3>
+          <p>You've completed the financial questionnaire. Use this information to make informed decisions about your financial future.</p>
+          <button onClick={() => window.print()}>Print Summary</button>
+          
         </div>
+      </div>
       )
     }
   ], [
