@@ -1,14 +1,5 @@
 import './FinanceNavigation.css';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  formatCurrency, 
-  formatMonths, 
-  formatPercent, 
-  monthsToPaidOff, 
-  calcTotalInterest, 
-  calcMonthlyInterest
-} from './utils/utils.js';
-import { getPayIntervalMultipliers, getColorClass } from './utils/utils.js';
 import useLocalStorage from './hooks/useLocalStorage';
 import ExportButtons from './ExportButtons';
 // Forms
@@ -25,6 +16,9 @@ import PayStubSummary from './PayStubSum.jsx';
 import AccountsSummary from './AcctSum.jsx';
 import DebtSummary from './DebtSum.jsx';
 import HousingSummary from './HousingSum.jsx';
+import TransportSummary from './TransportSum.jsx';
+import RecurringSummary from './RecurringSum.jsx';
+import CashFlowSummary from './CashFlowSum.jsx';
 
 const FinanceNavigation = () => {
   // State for all the financial data with useLocalStorage integration
@@ -49,11 +43,6 @@ const FinanceNavigation = () => {
   const [progress, setProgress] = useState(0);
   // Prevent multiple updates
   const updateInProgress = React.useRef(false);
-
-  // Transportation, vehicle loans, insurance, maintenance, fuel
-  const monthlyTransportExp = transportExpenses.totalMonthlyExpenses || 0;
-  const annualTransportExp = (transportExpenses.totalMonthlyExpenses || 0) * 12;
-  const numberOfVehicles = transportExpenses.details.vehicles.length;
 
   // Wrapper functions to ensure data is properly saved/loaded - made with useCallback to prevent unnecessary re-renders
   const handlePayStubDataUpdate = useCallback((newData) => {
@@ -164,7 +153,8 @@ const FinanceNavigation = () => {
         accountName: 'Mortgage', 
         balance: mortgageBalance, 
         interestRate,
-        minimumPayment: monthlyPayment
+        minimumPayment: monthlyPayment,
+        type: 'mortgage'
       };
       housingDebtDetail = [mortgageDetail];
     }
@@ -179,7 +169,8 @@ const FinanceNavigation = () => {
             accountName: name,
             balance: loanBalance,
             interestRate,
-            minimumPayment: vehiclePayment
+            minimumPayment: vehiclePayment,
+            type: 'auto'
           };
         });
     }
@@ -377,147 +368,19 @@ const FinanceNavigation = () => {
 <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
 <DebtSummary debtList={debtList} payStubData={payStubData} housingExpenses={housingExpenses} />
 <HousingSummary housingExpenses={housingExpenses} payStubData={payStubData}/>
-          
-        
+<TransportSummary transportExpenses={transportExpenses} payStubData={payStubData}/>     
+<RecurringSummary recurringExpenses={recurringExpenses} />     
+<CashFlowSummary 
+  payStubData={payStubData} 
+  debtList={debtList}
+  housingExpenses={housingExpenses}
+  transportExpenses={transportExpenses}
+  personalExpenses={personalExpenses}
+  postTaxContributions={postTaxContributions}
+  summary={summary}  
+  recurringExpenses={recurringExpenses}
+/>
 
-
-{transportExpenses && (
-  <div className="summary-section">
-    <h3>Transportation</h3>
-    <p>
-      <span>Monthly Transportation Expenses:</span>
-      <span>{formatCurrency(monthlyTransportExp)}</span>
-    </p>
-    <p>
-      <span>Annual Transportation Expenses:</span>
-      <span>{formatCurrency(annualTransportExp)}</span>
-    </p>
-    
-    {transportExpenses.transportMode === 'own' && transportExpenses.details && transportExpenses.details.vehicles && (
-      <>
-        <p>
-          <span>Number of Vehicles:</span>
-          <span>{numberOfVehicles}</span>
-        </p>
-        
-        <p>
-          <span>Total Monthly Fuel:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.fuelExpense || 0), 0)}</span>
-        </p>
-        
-        <p>
-          <span>Total Monthly Insurance:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.insurance || 0), 0)}</span>
-        </p>
-        
-        <p>
-          <span>Total Monthly Maintenance:</span>
-          <span>${transportExpenses.details.vehicles.reduce((sum, vehicle) => sum + (vehicle.maintenance || 0), 0)}</span>
-        </p>
-        
-        {transportExpenses.details.vehicles.filter(vehicle => vehicle.paymentStatus === 'paid-off').length > 0 && (
-          <p>
-            <span>Paid-off Vehicles:</span>
-            <span>{transportExpenses.details.vehicles.filter(vehicle => vehicle.paymentStatus === 'paid-off').map(v => v.name).join(', ')}</span>
-          </p>
-        )}
-        
-        {transportExpenses.details.vehicles.map((vehicle) => (
-          vehicle.paymentStatus === 'making-payments' && (
-            <React.Fragment key={vehicle.id}>
-              <h4>Loan/Payments Data For {vehicle.name}</h4>
-              <p>
-                <span>Monthly Payment:</span>
-                <span>{(formatCurrency(vehicle.vehiclePayment) || 0)}</span>
-              </p>
-              <p>
-                <span>Monthly Interest:</span>
-                <span>{((((vehicle.loanBalance || 0) * ((vehicle.interestRate || 0) / 100)) / 12))}</span>
-              </p>
-              <p>
-                <span>Annual Interest:</span>
-                <span>{((vehicle.loanBalance || 0) * (vehicle.interestRate || 0) / 100)}</span>
-              </p>
-              <p>
-                <span>Months to pay off:</span>
-                <span>
-                  {monthsToPaidOff(vehicle.loanBalance, vehicle.vehiclePayment, vehicle.interestRate)}
-                </span>
-              </p>
-              <p>
-                <span>Total Interest:</span>
-                <span>
-                  {calcTotalInterest(vehicle.loanBalance, vehicle.vehiclePayment, vehicle.interestRate)}
-                  
-                </span>
-              </p>
-            </React.Fragment>
-          )
-        ))}
-      </>
-    )}
-  </div>
-)}
-
-{recurringExpenses && recurringExpenses.expenses && (
-  <div className="summary-section">
-    <h3>Recurring Expenses</h3>
-    {recurringExpenses.expenses.map((item, index) => (
-      <p key={index}>
-        <span>{item.name} ({item.frequency}):</span>
-        <span>${item.cost}</span>
-      </p>
-    ))}
-    <p>
-      <span>Monthly Equivalent:</span>
-      <span>{(recurringExpenses.summary?.monthlyTotal || 0)}</span>
-    </p>
-    <p>
-      <span>Annual Equivalent:</span>
-      <span>{(recurringExpenses.summary?.annualTotal || 0)}</span>
-    </p>
-    <p>
-      <span>Total Services:</span>
-      <span>{recurringExpenses.summary?.count || 0}</span>
-    </p>
-  </div>
-)}
-
-{personalExpenses && postTaxContributions && (
-  <div className="summary-section">
-    <h3>Monthly Cash Flow</h3>
-    <p>
-      <span>Income:</span>
-      <span>${summary.totalNetPay}</span>
-    </p>
-    <p>
-      <span>Housing:</span>
-      <span>-{(housingExpenses?.totalMonthlyExpenses || 0)}</span>
-    </p>
-    <p>
-      <span>Transportation:</span>
-      <span>-{(transportExpenses?.totalMonthlyExpenses || 0)}</span>
-    </p>
-    <p>
-      <span>Debt Payments:</span>
-      <span>-{(debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0)}</span>
-    </p>
-    <p>
-      <span>Savings Contributions:</span>
-      <span>-{(postTaxContributions?.total_contributions || 0)}</span>
-    </p>
-    <p className="remaining">
-      <span>Remaining:</span>
-      <span>{(
-        summary.totalNetPay -
-        (housingExpenses?.totalMonthlyExpenses || 0) -
-        (transportExpenses?.totalMonthlyExpenses || 0) -
-        (debtList ? debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0) : 0) -
-        (postTaxContributions?.total_contributions || 0)
-      )}</span>
-    </p>
-  </div>
-)}
           <ExportButtons 
         data={{
           payStubData,

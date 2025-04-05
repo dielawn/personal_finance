@@ -13,6 +13,8 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
   
   // Common states
   const [monthlyPayment, setMonthlyPayment] = useState('');
+  // New insurance state
+  const [insurance, setInsurance] = useState('');
   
   // Utility states
   const [electricity, setElectricity] = useState('');
@@ -62,11 +64,23 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
             console.log(`Setting monthly payment to: ${initialData.housingDetails.monthlyPayment}`);
             setMonthlyPayment(initialData.housingDetails.monthlyPayment.toString());
           }
+          
+          // Set insurance for homeowners
+          if (initialData.housingDetails.insurance !== undefined) {
+            console.log(`Setting homeowners insurance to: ${initialData.housingDetails.insurance}`);
+            setInsurance(initialData.housingDetails.insurance.toString());
+          }
         } else if (initialData.housingType === 'rent') {
           // Set renter-specific details
           if (initialData.housingDetails.monthlyRent !== undefined) {
             console.log(`Setting monthly rent to: ${initialData.housingDetails.monthlyRent}`);
             setMonthlyPayment(initialData.housingDetails.monthlyRent.toString());
+          }
+          
+          // Set insurance for renters
+          if (initialData.housingDetails.insurance !== undefined) {
+            console.log(`Setting renters insurance to: ${initialData.housingDetails.insurance}`);
+            setInsurance(initialData.housingDetails.insurance.toString());
           }
         }
       }
@@ -160,6 +174,9 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
     // Add monthly payment if it exists
     if (monthlyPayment) total += parseFloat(monthlyPayment);
     
+    // Add insurance if it exists
+    if (insurance) total += parseFloat(insurance);
+    
     // Add utilities
     total += parseFloat(calculateTotalUtilities());
     
@@ -190,9 +207,11 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
         mortgageBalance: parseFloat(mortgageBalance) || 0,
         homeValue: parseFloat(homeValue) || 0,
         interestRate: parseFloat(interestRate) || 0,
-        monthlyPayment: parseFloat(monthlyPayment) || 0
+        monthlyPayment: parseFloat(monthlyPayment) || 0,
+        insurance: parseFloat(insurance) || 0
       } : {
-        monthlyRent: parseFloat(monthlyPayment) || 0
+        monthlyRent: parseFloat(monthlyPayment) || 0,
+        insurance: parseFloat(insurance) || 0
       },
       utilities: {
         items: utilityItems,
@@ -317,6 +336,20 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
               placeholder={`Enter monthly ${housingType === 'rent' ? 'rent' : 'mortgage'}`}
             />
           </div>
+          
+          {/* New Insurance Field */}
+          <div className="form-group">
+            <label>Monthly {housingType === 'rent' ? 'Renters' : 'Homeowners'} Insurance ($):</label>
+            <input
+              type="number"
+              value={insurance}
+              onChange={(e) => {
+                console.log(`Insurance changed to: ${e.target.value}`);
+                setInsurance(e.target.value);
+              }}
+              placeholder={`Enter monthly ${housingType === 'rent' ? 'renters' : 'homeowners'} insurance`}
+            />
+          </div>
         </div>
       )}
       
@@ -400,6 +433,12 @@ const HousingExpenses = ({ setHousingExpenses, initialData }) => {
             <span>Housing ({housingType === 'rent' ? 'Rent' : 'Mortgage'}):</span>
             <span>${monthlyPayment}</span>
           </div>
+          {insurance && (
+            <div className="summary-row">
+              <span>{housingType === 'rent' ? 'Renters' : 'Homeowners'} Insurance:</span>
+              <span>${insurance}</span>
+            </div>
+          )}
           <div className="summary-row">
             <span>Total Utilities:</span>
             <span>${calculateTotalUtilities()}</span>

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './PieChart.css';
+import { formatCurrency, formatPercent } from './utils/utils';
 
-const PieChart = ({ grossIncome, expenses }) => {
+const PieChart = ({ title, income, color, expenses }) => {
   const [pieData, setPieData] = useState([]);
   
   useEffect(() => {
     // Calculate the remaining income after expenses
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const remainingIncome = grossIncome - totalExpenses;
+    const remainingIncome = income - totalExpenses;
     
     // Combine remaining income with expenses for the pie chart
     const newPieData = [
-      { label: 'Remaining Income', amount: remainingIncome, color: '#4CAF50' },
+      { label: 'Remaining Income', amount: remainingIncome, color },
       ...expenses
     ].filter(item => item.amount > 0); // Filter out zero or negative values
     
@@ -37,11 +38,11 @@ const PieChart = ({ grossIncome, expenses }) => {
     
     setPieData(processedData);
     
-    console.log('Gross Income:', grossIncome);
+    console.log('Income:', income);
     console.log('Total Expenses:', totalExpenses);
     console.log('Remaining Income:', remainingIncome);
     console.log('Pie Data:', processedData);
-  }, [grossIncome, expenses]);
+  }, [income, expenses]);
   
   // Convert polar coordinates to cartesian
   const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
@@ -83,7 +84,7 @@ const PieChart = ({ grossIncome, expenses }) => {
   
   return (
     <div className="pie-chart-container">
-      <h2>Income & Expenses Breakdown</h2>
+      <h2>{title} Breakdown</h2>
       <div className="chart-layout">
         <div className="pie-chart">
           <svg 
@@ -120,7 +121,7 @@ const PieChart = ({ grossIncome, expenses }) => {
                     fontSize="14"
                     fontWeight="bold"
                   >
-                    {item.percentage.toFixed(1)}%
+                    {formatPercent(item.percentage)}
                   </text>
                 </g>
               );
@@ -139,7 +140,7 @@ const PieChart = ({ grossIncome, expenses }) => {
               ></div>
               <div className="legend-text">
                 <span className="legend-label">{item.label}</span>
-                <span className="legend-value">${item.amount.toLocaleString()} ({item.percentage.toFixed(1)}%)</span>
+                <span className="legend-value">{formatCurrency(item.amount)} ({formatPercent(item.percentage)})</span>
               </div>
             </div>
           ))}
@@ -147,10 +148,11 @@ const PieChart = ({ grossIncome, expenses }) => {
       </div>
       
       <div className="summary">
-        <p>Gross Income: <span className="amount">${grossIncome.toLocaleString()}</span></p>
-        <p>Total Expenses: <span className="amount">${expenses.reduce((sum, expense) => sum + expense.amount, 0).toLocaleString()}</span></p>
-        <p>Remaining Income: <span className="amount">${(grossIncome - expenses.reduce((sum, expense) => sum + expense.amount, 0)).toLocaleString()}</span></p>
+        <p>Gross Income: <span className="amount">{formatCurrency(income)}</span></p>
+        <p>Total Expenses: <span className="amount">{formatCurrency(expenses.reduce((sum, expense) => sum + expense.amount, 0))}</span></p>
+        <p>Remaining Income: <span className="amount">{formatCurrency((income - expenses.reduce((sum, expense) => sum + expense.amount, 0)))}</span></p>
       </div>
+    
     </div>
   );
 };

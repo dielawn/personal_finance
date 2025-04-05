@@ -235,7 +235,22 @@
 
 .housingSummary > .proTip {
   position: absolute;
-  top: 30%;
+  top: 25%;
   left: 45%;
   text-align: left;
+}
+
+.transportSummary {
+  position: relative;
+}
+.transportSummary > .proTip {
+  position: absolute;
+  top: 29%;
+  left: 45%;
+  text-align: left;
+  padding-right: 20px;
+}
+
+.loanData, .dataCard {
+  max-width: 30%;
 }

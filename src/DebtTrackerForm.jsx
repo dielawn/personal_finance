@@ -2,16 +2,22 @@ import React, { useState, useEffect } from 'react';
 import './DebtTrackerForm.css';
 
 const DebtTrackerForm = ({ setAcctBalanceData, initialData }) => {
+  // Debt categories
+  const debtTypes = ['mortgage', 'auto', 'personal' ]
+  // State for storing all debt entries
+  const [debtList, setDebtList] = useState([]);
   // State for a single debt entry form
   const [debtEntry, setDebtEntry] = useState({
     accountName: '',
     balance: 0,
     minimumPayment: 0,
-    interestRate: 0
+    interestRate: 0,
+    type: debtTypes[2]
   });
 
-  // State for storing all debt entries
-  const [debtList, setDebtList] = useState([]);
+  
+
+
   
   // Initialize from initialData if available
   useEffect(() => {
@@ -212,8 +218,8 @@ const DebtTrackerForm = ({ setAcctBalanceData, initialData }) => {
               <div className="debt-column">Actions</div>
             </div>
             
-            {debtList.map((debt) => (
-              <div className="debt-item" key={debt.id}>
+            {debtList.map((debt, index) => (
+              <div className="debt-item" key={index}>
                 <div className="debt-column">{debt.accountName}</div>
                 <div className="debt-column">${debt.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="debt-column">${debt.minimumPayment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>

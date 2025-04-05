@@ -47,7 +47,7 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
             {housingExpenses && (
             <div className="summary-section">
                 <h3>Housing</h3>
-                <PieChart grossIncome={grossMonthly} expenses={expensesArray}/>
+                <PieChart title={'Income & Housing'} income={grossMonthly} expenses={expensesArray} color={'#4CAF50'}/>
                 <p>
                     <span className='acct-label'>Housing Type: </span>
                     <span className='acct-value'>{housingExpenses.housingType === ' Own' ? 'Home Owner' : ' Renting'}</span>
@@ -55,10 +55,20 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
                 <div className="card flexColumn">
 
                 {housingExpenses.housingType === 'own' && housingExpenses.housingDetails && (
-                    <p>
+                   <>
+                   <p>
                         <span className='acct-label'>Home Value: </span>
                         <span className='acct-value'>{formatCurrency(housingExpenses.housingDetails.homeValue || 0)}</span>
                     </p>
+                    <p>
+                        <span className="acct-label">Mortgage Balance: </span>
+                        <span className="acct-value">{formatCurrency(housingExpenses.housingDetails.mortgageBalance || 0)}</span>
+                    </p>
+                    <p>
+                        <span className="acct-label">Home Equity: </span>
+                        <span className="acct-value">{formatCurrency(housingExpenses.housingDetails.homeValue - housingExpenses.housingDetails.mortgageBalance)}</span>
+                    </p>
+                    </>
                 )}
                     
                 {housingExpenses.housingType === 'rent' && housingExpenses.housingDetails && (
@@ -70,6 +80,14 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
                 <p>
                     <span className='acct-label'>30% of Gross Income:</span>
                     <span className='acct-value'>{formatCurrency(_30PercentGross)}</span>
+                </p>
+                <p>
+                    <span className='acct-label'>Monthly Insurance:</span>
+                    <span className='acct-value'>{formatCurrency(housingExpenses.housingDetails.insurance)}</span>
+                </p>
+                <p>
+                    <span className='acct-label'>Annual Insurance:</span>
+                    <span className='acct-value'>{formatCurrency(housingExpenses.housingDetails.insurance * 12)}</span>
                 </p>
                 <p>
                     <span className='acct-label'>Monthly Housing Expenses:</span>
@@ -91,13 +109,13 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
                         <span className='acct-value'>{formatCurrency(annualMortgageExp)}</span>
                     </p>
                     <p>
-                        <span className='acct-label'>Months to pay off:</span>
+                        <span className='acct-label'>Months To Pay Off:</span>
                         <span className='acct-value'>
                             {formatMonths(monthsMortgagePaidOff)}
                         </span>
                     </p>
                     <p>
-                        <span className='acct-label'>Total Mortgage Interest:</span>
+                        <span className='acct-label'>Total Interest At Pay Off:</span>
                         <span className='acct-value'>
                             {calcTotalInterest(mortgageBalance, mortgagePayment, mortgageRate)}
                         </span>
