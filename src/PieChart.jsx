@@ -4,12 +4,10 @@ import { formatCurrency, formatPercent } from './utils/utils';
 
 const PieChart = ({ title, income, color, expenses }) => {
   const [pieData, setPieData] = useState([]);
-  
+
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const remainingIncome = income - totalExpenses;
   useEffect(() => {
-    // Calculate the remaining income after expenses
-    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const remainingIncome = income - totalExpenses;
-    
     // Combine remaining income with expenses for the pie chart
     const newPieData = [
       { label: 'Remaining Income', amount: remainingIncome, color },
@@ -148,9 +146,14 @@ const PieChart = ({ title, income, color, expenses }) => {
       </div>
       
       <div className="summary">
-        <p>Gross Income: <span className="amount">{formatCurrency(income)}</span></p>
+        <p>Income: <span className="amount">{formatCurrency(income)}</span></p>
         <p>Total Expenses: <span className="amount">{formatCurrency(expenses.reduce((sum, expense) => sum + expense.amount, 0))}</span></p>
-        <p>Remaining Income: <span className="amount">{formatCurrency((income - expenses.reduce((sum, expense) => sum + expense.amount, 0)))}</span></p>
+        <p>Remaining Income: <span className="amount">{formatCurrency(remainingIncome)}</span></p>
+          <p>{remainingIncome < 0? 
+          `❌ Over spending in this category. Need ${formatCurrency(totalExpenses - income)} from another category.` 
+          : 
+          `✅ Within budget. ${formatCurrency(remainingIncome)} remaining.`}
+          </p>
       </div>
     
     </div>

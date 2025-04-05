@@ -33,7 +33,7 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
         {
             label: 'Housing',
             amount: monthlyHousingExp,
-            color: '#36A2EB'
+            color: '#F2F4CB'
     
         }
     ];
@@ -47,7 +47,7 @@ const HousingSummary = ({ housingExpenses, payStubData }) => {
             {housingExpenses && (
             <div className="summary-section">
                 <h3>Housing</h3>
-                <PieChart title={'Income & Housing'} income={grossMonthly} expenses={expensesArray} color={'#4CAF50'}/>
+                <PieChart title={'Income & Housing'} income={grossMonthly} expenses={expensesArray} color={'#B7990D'}/>
                 <p>
                     <span className='acct-label'>Housing Type: </span>
                     <span className='acct-value'>{housingExpenses.housingType === ' Own' ? 'Home Owner' : ' Renting'}</span>

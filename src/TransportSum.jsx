@@ -41,7 +41,7 @@ const TransportSummary = ({ transportExpenses, payStubData }) => {
     {
         label: 'Transportation Expenses',
         amount: monthlyTransportExp,
-        color: '#BFC3BA'
+        color: '#F2F4CB'
     },
   ]
 
@@ -56,7 +56,7 @@ const TransportSummary = ({ transportExpenses, payStubData }) => {
             {transportExpenses && (
             <div className="summary-section">
                 <h3>Transportation</h3>
-                <PieChart title={'Income & Transportation Expense '} income={monthlyNetIncome} expenses={expenses} color={'#A9ACA9'}/>
+                <PieChart title={'Income & Transportation Expense '} income={monthlyNetIncome} expenses={expenses} color={'#B7990D'}/>
                 
                 <p>
                 <span>Monthly Transportation Expenses:</span>
