@@ -2,20 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './HousingExpenses.css'
 
 const HousingExpenses = ({ setHousingExpenses, initialData }) => {
-  // Example Object
-  // {housingType: 'own', housingDetails: {…}, utilities: {…}, totalMonthlyExpenses: 1900}
-  // housingDetails
-  // : 
-  // {mortgageBalance: 200000, homeValue: 300000, interestRate: 3.25, monthlyPayment: 1800}
-  // housingType
-  // : 
-  // "own"
-  // totalMonthlyExpenses
-  // : 
-  // 1900
-  // utilities
-  // : 
-  // {items: {…}, total: 100}
 
   // Main housing type state
   const [housingType, setHousingType] = useState('');

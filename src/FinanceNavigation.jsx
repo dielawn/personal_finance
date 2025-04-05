@@ -24,6 +24,7 @@ import PostTaxSavings from './PostTaxSavings';
 import PayStubSummary from './PayStubSum.jsx';
 import AccountsSummary from './AcctSum.jsx';
 import DebtSummary from './DebtSum.jsx';
+import HousingSummary from './HousingSum.jsx';
 
 const FinanceNavigation = () => {
   // State for all the financial data with useLocalStorage integration
@@ -34,6 +35,7 @@ const FinanceNavigation = () => {
     totalNetPay: 0,
     preTaxSavings: 0
   });
+  // Forms Data
   const [acctBalanceData, setAcctBalanceData] = useLocalStorage('finance_acct_balance', null);
   const [debtList, setDebtList] = useLocalStorage('finance_debt_list', []);
   const [housingExpenses, setHousingExpenses] = useLocalStorage('finance_housing_expenses', null);
@@ -47,19 +49,6 @@ const FinanceNavigation = () => {
   const [progress, setProgress] = useState(0);
   // Prevent multiple updates
   const updateInProgress = React.useRef(false);
-
-  // Housing, utilities
-  const monthlyHousingExp = housingExpenses.totalMonthlyExpenses || 0;
-  const annualHousingExp = (housingExpenses.totalMonthlyExpenses || 0) * 12
-  const mortgageMonthlyExp = calcMonthlyInterest(housingExpenses.housingDetails.mortgageBalance, housingExpenses.housingDetails.interestRate)
-  const annualMortgageExp = mortgageMonthlyExp * 12;
-  const mortgageBalance = housingExpenses.housingDetails.mortgageBalance || 0;
-  const mortgagePayment = housingExpenses.housingDetails.monthlyPayment || 0;
-  const mortgageRate = housingExpenses.housingDetails.interestRate || 0;
-  const monthlyRate = (mortgageRate / 100) / 12;
-  const monthsMortgagePaidOff = Math.log(mortgagePayment / (mortgagePayment - monthlyRate * mortgageBalance)) / Math.log(1 + monthlyRate) || 0;
-  
-
 
   // Transportation, vehicle loans, insurance, maintenance, fuel
   const monthlyTransportExp = transportExpenses.totalMonthlyExpenses || 0;
@@ -387,49 +376,11 @@ const FinanceNavigation = () => {
           </div>
 <AccountsSummary acctBalanceData={acctBalanceData} payStubData={payStubData} postTaxContributions={postTaxContributions}/>
 <DebtSummary debtList={debtList} payStubData={payStubData} housingExpenses={housingExpenses} />
-
+<HousingSummary housingExpenses={housingExpenses} payStubData={payStubData}/>
           
         
 
-{housingExpenses && (
-  <div className="summary-section">
-    <h3>Housing</h3>
-    <p>
-      <span>Monthly Housing Expenses:</span>
-      <span>{formatCurrency(monthlyHousingExp)}</span>
-    </p>
-    <p>
-      <span>Annual Housing Expenses:</span>
-      <span>{formatCurrency(annualHousingExp)}</span>
-    </p>
-    
-    {housingExpenses.housingType === 'own' && housingExpenses.housingDetails && housingExpenses.housingDetails.monthlyPayment > 0 && (
-      <>
-        <p>
-          <span>Monthly Mortgage Interest:</span>
-          <span>{formatCurrency(mortgageMonthlyExp)}</span>
 
-        </p>
-        <p>
-          <span>Annual Mortgage Interest:</span>
-          <span>{formatCurrency(annualMortgageExp)}</span>
-        </p>
-        <p>
-          <span>Months to pay off:</span>
-          <span>
-            {formatMonths(monthsMortgagePaidOff)}
-          </span>
-        </p>
-        <p>
-          <span>Total Mortgage Interest:</span>
-          <span>
-            {calcTotalInterest(mortgageBalance, mortgagePayment, mortgageRate)}
-          </span>
-        </p>
-      </>
-    )}
-  </div>
-)}
 {transportExpenses && (
   <div className="summary-section">
     <h3>Transportation</h3>

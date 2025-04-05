@@ -123,7 +123,7 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                 {enhancedAccounts.map(account => (
                     <div key={account.id} className="card">
                         <p className="account-row">
-                            <span className='acct-name'>{account.label}:</span> 
+                            <span className='acct-label'>{account.label} Balance:</span> 
                             <span className='summary-value'>{formatCurrency(account.value)}</span>
                         </p>
                         <div className='flexColumn'>
@@ -218,7 +218,7 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                 <span>{formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
             </p>
             </div>
-            <ProjectGrowth acctName={'All Accts'} initialBalance={acctBalanceData.totalAssets} annualContribution={totalSavings}/>
+            <ProjectGrowth acctName={'All Account Balances'} initialBalance={acctBalanceData.totalAssets} annualContribution={totalSavings}/>
            </div>
         </div>
     );

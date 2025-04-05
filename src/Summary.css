@@ -165,17 +165,28 @@
   padding: 4px 0;
 }
 
+/* Update the styles for the parent container of your label-value pairs */
+.card p {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 /* Style for labels - align left */
 .acct-label {
   text-align: left;
   color: #666;
   font-size: 0.9em;
+  flex: 1;
 }
 
 /* Style for values - align right */
 .acct-value {
   text-align: right;
   font-weight: 500;
+  flex: 1;
 }
 
 /* Button styling */
@@ -216,4 +227,15 @@
 .acct-card {
   max-width: fit-content;
   flex-wrap: nowrap;
+}
+
+.housingSummary {
+  position: relative;
+}
+
+.housingSummary > .proTip {
+  position: absolute;
+  top: 30%;
+  left: 45%;
+  text-align: left;
 }
