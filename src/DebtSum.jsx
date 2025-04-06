@@ -26,8 +26,8 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
 
   // Housing Debt calc 
   // Debt calculations
-  const generalDebts = debtList.reduce((sum, debt) => sum + debt.balance, 0);
-  const totalDebt = generalDebts;
+  const totalDebt = debtList.reduce((sum, debt) => sum + debt.balance, 0);
+  
 
   // Fix this line by extracting housing payment outside the reduce
   const debtMinPayments = debtList.reduce((sum, debt) => sum + debt.minimumPayment, 0);
@@ -49,9 +49,7 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
   //Automotive debt
   const multipliers = getPayIntervalMultipliers(payStubData[0].payInterval)
   // DTI of 35% or less is best
-  const debtToIncome = payStubData[0]?.grossPay && multipliers?.monthly 
-    ? (totalDebt / (payStubData[0].grossPay * multipliers.monthly)) * 100 
-    : 0;
+  const debtToIncome = (debtMinPayments / (payStubData[0].grossPay * multipliers.monthly)) * 100;
 
   const totalInterest = debtList.reduce((totalInterest, debt) => {
       const monthlyRate = (debt.interestRate / 100) / 12;
@@ -69,14 +67,16 @@ const DebtSummary = ({ debtList, payStubData, housingExpenses}) => {
       return totalInterest + interestAmount;
   }, 0); // Add initial value of 0 here
 
-  useEffect(() => {
-    console.log('debts', debtList);
-    
+  useEffect(() => {   
     // Cleanup function to ensure body scrolling is restored when component unmounts
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [debtList]);
+
+  useEffect(() => {
+    console.log('debts 8', totalDebt);
+  }, [])
 
   return (        
     <div className='debtList summary-section'>

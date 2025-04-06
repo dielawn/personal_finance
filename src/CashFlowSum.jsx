@@ -24,18 +24,7 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
     const needs = housingExpenses.totalMonthlyExpenses + personalExpenses.groceries + personalExpenses.clothing + totalDebtPayment;
     const monthlySavings = hsa * multipliers.monthly + match401k * multipliers.monthly + retirement401k * multipliers.monthly + postTaxContributions.total_contributions;
     const monthlyTransport = transportExpenses.totalMonthlyExpenses
-    useEffect(() => {
-        console.log('paystub', payStubData[0])
-        console.log('debts', debtList)
-        console.log('housing', housingExpenses)
-        console.log('trans', transportExpenses)
-        console.log('personal', personalExpenses)
-        console.log('postTaxContributions', postTaxContributions)
-        console.log('summary', summary)
-        console.log('totalDebts', personalDebtPaymentTotal)
-        console.log('recurring', recurringExpenses.summary.monthlyTotal)
-        console.log('savings', hsa, match401k, retirement401k, postTaxContributions.total_contributions)
-    }, [payStubData, debtList, housingExpenses, transportExpenses, personalExpenses, postTaxContributions, summary])
+    
     const colors = ['#F2F4CB', '#A5D0A8','#96BD99', '#99BFA8', '#8CADA7', '#64520F', '#B7990D', '#D5C76C', ]
     const wantsExp = [
         {
@@ -117,7 +106,7 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
         {
             label: 'Livings Expenses',
             color: colors[1],
-            amount: housingExpenses?.totalMonthlyExpenses,
+            amount: housingExpenses?.totalMonthlyExpenses + personalExpenses.groceries,
         },
         {
             label: 'Health Insurance',
@@ -163,19 +152,19 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
     return (
         <div>
             <PieChart 
-                title={'50% Needs'} 
+                title={'50% of Net Monthly Income. "Needs"'} 
                 income={monthlyNet * .5} 
                 color={colors[0]} 
                 expenses={needsExp}
             />
             <PieChart 
-                title={'30% Wants'} 
+                title={'30% of Net Monthly Income. "Wants"'} 
                 income={monthlyNet * .3} 
                 color={colors[0]} 
                 expenses={wantsExp}
             />
             <PieChart 
-                title={'20% Savings'} 
+                title={'20% of Gross Monthly Income. "Savings"'} 
                 income={monthlyGrossPay * .2} 
                 color={colors[0]} 
                 expenses={savingsExp}

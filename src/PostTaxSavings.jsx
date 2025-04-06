@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './PostTaxSavings.css';
+import { formatCurrency } from './utils/utils';
 
 const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData, initialData }) => {
   // Default account types if no acctBalanceData is provided
@@ -8,11 +9,25 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     { id: 'iraAcct', name: 'IRA', amount: 0, percentage: 0, enabled: false, isPercentage: false }
   ];
 
-  // Initialize accounts from acctBalanceData if available
-  const initializeAccounts = () => {
-    console.log('acctBalanceData received:', acctBalanceData);
+  // Use refs to prevent unnecessary re-renders
+  const acctBalanceDataRef = useRef(acctBalanceData);
+  const initialDataRef = useRef(initialData);
+  const isComponentMounted = useRef(false);
+  
+  // Track if we're in the middle of initialization to prevent cascading updates
+  const [isInitializing, setIsInitializing] = useState(true);
+  
+  // State for accounts and total contributions
+  const [accounts, setAccounts] = useState(() => []);
+  const [totalContributions, setTotalContributions] = useState(0);
+  const [payAmount, setPayAmount] = useState(paycheck.netPay || 0);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize accounts from acctBalanceData if available - use memoized callback
+  const initializeAccounts = useCallback(() => {
+    console.log('Initializing accounts');
     
-    if (!acctBalanceData) {
+    if (!acctBalanceDataRef.current) {
       console.log('No acctBalanceData available, using defaults');
       return defaultAccountTypes;
     }
@@ -21,11 +36,11 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     const preTaxAccountIds = ['_401kBalance', 'hsaBalance', 'checkingAcct'];
     
     // Try to use accountsList if available
-    if (acctBalanceData.accountsList && acctBalanceData.accountsList.length > 0) {
-      console.log('Initializing accounts from accountsList:', acctBalanceData.accountsList);
+    if (acctBalanceDataRef.current.accountsList && acctBalanceDataRef.current.accountsList.length > 0) {
+      console.log('Initializing accounts from accountsList');
       
       // Filter out pre-tax accounts
-      return acctBalanceData.accountsList
+      return acctBalanceDataRef.current.accountsList
         .filter(account => !preTaxAccountIds.includes(account.id))
         .map(account => ({
           id: account.id,
@@ -39,7 +54,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     
     // Fallback: try to build accountsList from properties
     console.log('No accountsList found, trying to build from properties');
-    const accountKeys = Object.keys(acctBalanceData)
+    const accountKeys = Object.keys(acctBalanceDataRef.current)
       .filter(key => 
         key !== 'totalAssets' && 
         key !== 'accountsList' &&
@@ -47,14 +62,14 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
       );
     
     if (accountKeys.length > 0) {
-      console.log('Building accounts from properties:', accountKeys);
+      console.log('Building accounts from properties');
       
       return accountKeys.map(key => {
         // Generate a display name from the key
         const displayName = key
-          .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-          .replace(/_/g, ' ')         // Replace underscores with spaces
-          .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/_/g, ' ')
+          .replace(/^./, (str) => str.toUpperCase())
           .trim();
           
         return {
@@ -70,184 +85,185 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     
     console.log('No account properties found, using defaults');
     return defaultAccountTypes;
-  };
-
-  // State for accounts and total contributions
-  const [accounts, setAccounts] = useState(() => initializeAccounts());
-  const [totalContributions, setTotalContributions] = useState(0);
-  const [payAmount, setPayAmount] = useState(paycheck.netPay || 0);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Update accounts if acctBalanceData changes
-  useEffect(() => {
-    console.log('acctBalanceData changed, reinitializing accounts');
-    const newAccounts = initializeAccounts();
-    console.log('New accounts after reinitialization:', newAccounts);
-    setAccounts(newAccounts);
-  }, [acctBalanceData]);
-
-  // Initialize from initialData if available
-  useEffect(() => {
-    console.log('Initializing PostTaxSavings with:', initialData);
-    
-    if (!initialData) {
-      console.log('No initialData available, using defaults');
-      return;
-    }
-    
-    try {
-      // Set pay amount if provided
-      if (payAmount === 0 && paycheck > 0) {
-        console.log(`Setting payAmount to paycheck value: ${paycheck}`);
-        setPayAmount(paycheck);
-      }
-      
-      // Apply saved account settings
-      if (initialData.accounts && Array.isArray(initialData.accounts)) {
-        console.log('Initializing accounts from initialData:', initialData.accounts);
-        
-        const updatedAccounts = [...accounts];
-        let hasUpdates = false;
-        
-        // Update each account from saved data
-        initialData.accounts.forEach(savedAccount => {
-          const accountIndex = updatedAccounts.findIndex(acc => acc.id === savedAccount.id);
-          
-          if (accountIndex >= 0) {
-            console.log(`Updating account ${savedAccount.id} with saved settings`);
-            
-            updatedAccounts[accountIndex] = {
-              ...updatedAccounts[accountIndex],
-              enabled: true,
-              isPercentage: savedAccount.isPercentage || false,
-              amount: savedAccount.isPercentage ? 0 : (savedAccount.amount || 0),
-              percentage: savedAccount.isPercentage ? (savedAccount.percentage || 0) : 0
-            };
-            
-            hasUpdates = true;
-          } else {
-            console.log(`Account ${savedAccount.id} not found in current accounts list`);
-            // Could add missing accounts here if needed
-          }
-        });
-        
-        if (hasUpdates) {
-          console.log('Setting updated accounts:', updatedAccounts);
-          setAccounts(updatedAccounts);
-          setIsInitialized(true);
-        }
-      }
-      
-    } catch (error) {
-      console.error('Error initializing from initialData:', error);
-    }
-  }, [initialData, accounts, paycheck, payAmount]);
+  }, [defaultAccountTypes]);
 
   // Calculate actual contribution amount for an account
-  const calculateContribution = (account) => {
+  const calculateContribution = useCallback((account) => {
     if (!account.enabled) return 0;
     if (account.isPercentage) {
       return (payAmount * account.percentage) / 100;
     }
     return account.amount;
-  };
+  }, [payAmount]);
 
-  // Calculate total and update parent component whenever accounts or paycheck amount changes
+  // Handle changes to acctBalanceData through props
+  // This effect should NOT run on first render - we handle that separately
   useEffect(() => {
-    let total = 0;
+    // Skip if not mounted yet
+    if (!isComponentMounted.current) {
+      isComponentMounted.current = true;
+      acctBalanceDataRef.current = acctBalanceData;
+      return;
+    }
     
-    // Calculate total contributions
-    accounts.forEach(account => {
-      total += calculateContribution(account);
-    });
+    // Use JSON stringification to compare actual contents
+    const oldDataStr = JSON.stringify(acctBalanceDataRef.current);
+    const newDataStr = JSON.stringify(acctBalanceData);
     
-    setTotalContributions(total);
+    // Only update if the data has actually changed in content
+    if (oldDataStr !== newDataStr) {
+      console.log('acctBalanceData changed, reinitializing accounts');
+      acctBalanceDataRef.current = acctBalanceData;
+      
+      // Don't do any state updates during render - schedule for later
+      const timer = setTimeout(() => {
+        const newAccounts = initializeAccounts();
+        setAccounts(newAccounts);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [acctBalanceData, initializeAccounts]);
+
+  // Initialize component once on first render - with empty dependency array to run only once
+  useEffect(() => {
+    console.log('Component mounted, initializing');
+    setIsInitializing(true);
     
-    // Only update parent component if initialization is complete
-    if (isInitialized) {
-      // Create data object for parent component
-      const contributionsData = {
-        accounts: accounts.filter(account => account.enabled).map(account => {
-          const actualAmount = calculateContribution(account);
+    // Initialize accounts
+    const initialAccounts = initializeAccounts();
+    
+    // Set pay amount if provided
+    let initialPayAmount = paycheck > 0 ? paycheck : 0;
+    
+    // Apply saved account settings if available
+    let finalAccounts = initialAccounts;
+    if (initialData && initialData.accounts && Array.isArray(initialData.accounts)) {
+      console.log('Initializing accounts from initialData');
+      
+      // Update each account from saved data
+      finalAccounts = initialAccounts.map(account => {
+        // Find if there's saved data for this account
+        const savedAccount = initialData.accounts.find(acc => acc.id === account.id);
+        
+        if (savedAccount) {
+          console.log(`Updating account ${account.id} with saved settings`);
           return {
             ...account,
-            calculatedAmount: actualAmount
+            enabled: true,
+            isPercentage: savedAccount.isPercentage || false,
+            amount: savedAccount.isPercentage ? 0 : (savedAccount.amount || 0),
+            percentage: savedAccount.isPercentage ? (savedAccount.percentage || 0) : 0
           };
-        }),
-        total_contributions: total
-      };
-      
-      console.log('Post-tax contributions updated:', contributionsData);
-      setPostTaxContributions(contributionsData);
+        }
+        
+        return account;
+      });
     }
-  }, [accounts, payAmount, setPostTaxContributions, isInitialized]);
-
-  // Handle account toggle
-  const handleToggleAccount = (id) => {
-    setAccounts(accounts.map(account => 
-      account.id === id ? { ...account, enabled: !account.enabled } : account
-    ));
-    console.log(`Toggled account ${id}`);
     
-    if (!isInitialized) {
+    // Set all state in a single batch if possible
+    setAccounts(finalAccounts);
+    setPayAmount(initialPayAmount);
+    
+    // Finish initialization after a delay to ensure other state is set
+    const timer = setTimeout(() => {
       setIsInitialized(true);
-    }
-  };
+      setIsInitializing(false);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array - runs once on mount
 
-  // Handle amount change
-  const handleAmountChange = (id, value) => {
+  // Handle account toggle - now wrapped in an isInitialized check
+  const handleToggleAccount = useCallback((id) => {
+    if (isInitializing) return;
+    
+    setAccounts(currentAccounts => 
+      currentAccounts.map(account => 
+        account.id === id ? { ...account, enabled: !account.enabled } : account
+      )
+    );
+    console.log(`Toggled account ${id}`);
+  }, [isInitializing]);
+
+  // Handle amount change - with debounce to prevent rapid update cascades
+  const handleAmountChange = useCallback((id, value) => {
+    if (isInitializing) return;
+    
     // Ensure amount is a number and not negative
     const sanitizedValue = Math.max(0, Number(value) || 0);
     
-    setAccounts(accounts.map(account => {
-      if (account.id !== id) return account;
-      
-      if (account.isPercentage) {
-        // Limit percentage to 100
-        const cappedValue = Math.min(100, sanitizedValue);
-        console.log(`Updated account ${id} percentage to ${cappedValue}`);
-        return { ...account, percentage: cappedValue };
-      } else {
-        console.log(`Updated account ${id} amount to ${sanitizedValue}`);
-        return { ...account, amount: sanitizedValue };
-      }
-    }));
-    
-    if (!isInitialized) {
-      setIsInitialized(true);
-    }
-  };
+    setAccounts(currentAccounts => 
+      currentAccounts.map(account => {
+        if (account.id !== id) return account;
+        
+        if (account.isPercentage) {
+          // Limit percentage to 100
+          const cappedValue = Math.min(100, sanitizedValue);
+          console.log(`Updated account ${id} percentage to ${cappedValue}`);
+          return { ...account, percentage: cappedValue };
+        } else {
+          console.log(`Updated account ${id} amount to ${sanitizedValue}`);
+          return { ...account, amount: sanitizedValue };
+        }
+      })
+    );
+  }, [isInitializing]);
   
   // Handle contribution type toggle (dollar or percentage)
-  const handleContributionTypeChange = (id) => {
-    setAccounts(accounts.map(account => {
-      if (account.id !== id) return account;
-      
-      const newIsPercentage = !account.isPercentage;
-      console.log(`Changed account ${id} contribution type to ${newIsPercentage ? 'percentage' : 'dollar amount'}`);
-      return { 
-        ...account, 
-        isPercentage: newIsPercentage 
-      };
-    }));
+  const handleContributionTypeChange = useCallback((id) => {
+    if (isInitializing) return;
     
-    if (!isInitialized) {
-      setIsInitialized(true);
-    }
-  };
+    setAccounts(currentAccounts => 
+      currentAccounts.map(account => {
+        if (account.id !== id) return account;
+        
+        const newIsPercentage = !account.isPercentage;
+        console.log(`Changed account ${id} contribution type to ${newIsPercentage ? 'percentage' : 'dollar amount'}`);
+        return { 
+          ...account, 
+          isPercentage: newIsPercentage 
+        };
+      })
+    );
+  }, [isInitializing]);
   
-  // Handle paycheck amount change
-  const handlePayAmountChange = (amount) => {
+  // Handle paycheck amount change - with additional checks
+  const handlePayAmountChange = useCallback((amount) => {
+    if (isInitializing) return;
+    
     const sanitizedAmount = Math.max(0, Number(amount) || 0);
     setPayAmount(sanitizedAmount);
     console.log('Paycheck amount updated:', sanitizedAmount);
-    
-    if (!isInitialized) {
-      setIsInitialized(true);
-    }
-  };
+  }, [isInitializing]);
 
-  const handleSubmit = () => {
+  // Calculate contributions without triggering parent updates automatically
+  useEffect(() => {
+    // Skip during initialization
+    if (isInitializing) {
+      return;
+    }
+    
+    // Calculate total contributions
+    let total = 0;
+    accounts.forEach(account => {
+      if (account.enabled) {
+        if (account.isPercentage) {
+          total += (payAmount * account.percentage) / 100;
+        } else {
+          total += account.amount;
+        }
+      }
+    });
+    
+    console.log('Calculated total contributions:', total);
+    setTotalContributions(total);
+    
+    // Do NOT update parent component here - only do that on explicit submit
+  }, [accounts, payAmount, isInitializing]);
+
+  // Handle save/update button click
+  const handleSubmit = useCallback(() => {
     console.log('Post-tax savings form submitted');
     
     // Create data object for parent component
@@ -264,8 +280,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
     
     console.log('Post-tax contributions submitted:', contributionsData);
     setPostTaxContributions(contributionsData);
-  };
-  
+  }, [accounts, totalContributions, calculateContribution, setPostTaxContributions]);
 
   return (
     <div className="post-tax-savings">
@@ -344,7 +359,7 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
                     
                     {account.isPercentage && payAmount > 0 && (
                       <div className="calculated-amount">
-                        Calculated amount: ${contributionAmount.toFixed(2)}
+                        Calculated amount: {formatCurrency(contributionAmount)}
                       </div>
                     )}
                   </div>
@@ -357,9 +372,9 @@ const PostTaxSavings = ({ setPostTaxContributions, paycheck = 0, acctBalanceData
       
       <div className="total-section">
         <div className="total-label">Total Post-Tax Contributions:</div>
-        <div className="total-amount">${totalContributions.toFixed(2)}</div>
+        <div className="total-amount">{formatCurrency(totalContributions)}</div>
         <div className="remaining-amount">
-          Remaining from paycheck: ${Math.max(0, payAmount - totalContributions).toFixed(2)}
+          Remaining from paycheck: {formatCurrency(payAmount - totalContributions)}
         </div>
       </div>
       <div className="form-actions">
