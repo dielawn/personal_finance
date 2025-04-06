@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './AccountBalanceForm.css';
+import { formatCurrency } from './utils/utils';
 
 const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
-  // Default account types
+  // Default account types - moved outside component to prevent recreation on each render
   const defaultAccountTypes = [
     { id: 'checkingAcct', label: 'Checking Account', value: 0, active: true },
     { id: 'savingsAcct', label: 'Savings Account', value: 0, active: true },
@@ -14,18 +15,17 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
   ];
 
   // Initialize from initialData if available
-  const initializeAccounts = () => {
-    console.log('Initializing AccountBalanceForm with:', initialData);
+  const initializeAccounts = useCallback(() => {
+    // console.log('Initializing AccountBalanceForm with:', initialData);
     
     if (!initialData) {
-      console.log('No initialData available, using defaults');
-      return defaultAccountTypes;
+      // console.log('No initialData available, using defaults');
+      return [...defaultAccountTypes]; // Return a new array to avoid mutation
     }
 
     try {
       if (initialData.accountsList && initialData.accountsList.length > 0) {
-        // Convert accountsList to our accounts format
-        console.log('Using accountsList from initialData:', initialData.accountsList);
+        // console.log('Using accountsList from initialData:', initialData.accountsList);
         
         // Create a map of all default accounts for easy lookup
         const defaultAccountsMap = defaultAccountTypes.reduce((acc, account) => {
@@ -57,7 +57,7 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       }
       
       // Fallback: try to use individual properties
-      console.log('No accountsList found, checking individual properties');
+      // console.log('No accountsList found, checking individual properties');
       
       return defaultAccountTypes.map(account => {
         // If the account ID exists in initialData, use its value
@@ -72,22 +72,22 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       });
     } catch (error) {
       console.error('Error initializing accounts from initialData:', error);
-      return defaultAccountTypes;
+      return [...defaultAccountTypes];
     }
-  };
+  }, [initialData]);
 
   // State for managing accounts
-  const [accounts, setAccounts] = useState(() => initializeAccounts());
+  const [accounts, setAccounts] = useState(initializeAccounts);
   const [newAccountName, setNewAccountName] = useState('');
 
   // Re-initialize accounts when initialData changes
   useEffect(() => {
-    console.log('initialData changed, re-initializing accounts');
+    // console.log('initialData changed, re-initializing accounts');
     setAccounts(initializeAccounts());
-  }, [initialData]);
+  }, [initialData, initializeAccounts]);
 
-  // Handle input changes
-  const handleAccountChange = (id, value) => {
+  // Handle input changes - memoized to avoid recreating on each render
+  const handleAccountChange = useCallback((id, value) => {
     const parsedValue = parseFloat(value) || 0;
     
     setAccounts(prevAccounts => 
@@ -98,11 +98,11 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       )
     );
     
-    console.log(`Updated ${id} to ${parsedValue}`);
-  };
+    // console.log(`Updated ${id} to ${parsedValue}`);
+  }, []);
 
-  // Toggle account visibility
-  const toggleAccount = (id) => {
+  // Toggle account visibility - memoized to avoid recreating on each render
+  const toggleAccount = useCallback((id) => {
     setAccounts(prevAccounts => 
       prevAccounts.map(account => 
         account.id === id 
@@ -111,13 +111,13 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       )
     );
     
-    console.log(`Toggled ${id} visibility`);
-  };
+    // console.log(`Toggled ${id} visibility`);
+  }, []);
 
-  // Add new custom account
-  const addNewAccount = () => {
+  // Add new custom account - memoized to avoid recreating on each render
+  const addNewAccount = useCallback(() => {
     if (!newAccountName.trim()) {
-      console.log('Cannot add account with empty name');
+      // console.log('Cannot add account with empty name');
       return;
     }
     
@@ -132,26 +132,39 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
     
     setAccounts(prevAccounts => [...prevAccounts, newAccount]);
     setNewAccountName('');
-    console.log(`Added new account: ${newAccountName} with id ${id}`);
-  };
+    // console.log(`Added new account: ${newAccountName} with id ${id}`);
+  }, [newAccountName]);
 
-  // Remove custom account
-  const removeAccount = (id) => {
+  // Remove custom account - memoized to avoid recreating on each render
+  const removeAccount = useCallback((id) => {
     setAccounts(prevAccounts => prevAccounts.filter(account => account.id !== id));
-    console.log(`Removed account with id ${id}`);
-  };
+    // console.log(`Removed account with id ${id}`);
+  }, []);
 
-  // Calculate total balance (only from active accounts)
-  const totalBalance = accounts
-    .filter(account => account.active)
-    .reduce((sum, account) => sum + account.value, 0);
+  // Reset form to default values - memoized to avoid recreating on each render
+  const handleReset = useCallback(() => {
+    setAccounts([...defaultAccountTypes]);
+    setNewAccountName('');
+    // console.log('Form reset to default values');
+  }, []);
+
+  // Calculate total balance (only from active accounts) - memoized to avoid recalculating on each render
+  const totalBalance = useMemo(() => 
+    accounts
+      .filter(account => account.active)
+      .reduce((sum, account) => sum + account.value, 0),
+    [accounts]
+  );
+
+  // Get active accounts - memoized to avoid recalculating on each render
+  const activeAccounts = useMemo(() => 
+    accounts.filter(account => account.active),
+    [accounts]
+  );
 
   // Update parent component state
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    
-    // Get active accounts
-    const activeAccounts = accounts.filter(account => account.active);
     
     // Create base data object
     const updatedData = {
@@ -169,15 +182,55 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       updatedData[account.id] = account.value;
     });
     
-    console.log('Form submitted with data:', updatedData);
+    // console.log('Form submitted with data:', updatedData);
     setAcctBalanceData(updatedData);
+  }, [activeAccounts, totalBalance, setAcctBalanceData]);
+
+  // Render account checkboxes - separated for clarity
+  const renderAccountCheckboxes = () => {
+    return accounts.map(account => (
+      <div key={account.id} className="account-toggle">
+        <input
+          type="checkbox"
+          id={`toggle-${account.id}`}
+          checked={account.active}
+          onChange={() => toggleAccount(account.id)}
+        />
+        <label htmlFor={`toggle-${account.id}`}>{account.label}</label>
+        {account.custom && (
+          <button 
+            type="button" 
+            className="remove-account-btn" 
+            onClick={() => removeAccount(account.id)}
+            aria-label={`Remove ${account.label}`}
+          >
+            ✕
+          </button>
+        )}
+      </div>
+    ));
   };
 
-  // Reset form to default values
-  const handleReset = () => {
-    setAccounts(defaultAccountTypes);
-    setNewAccountName('');
-    console.log('Form reset to default values');
+  // Render account balance inputs - separated for clarity
+  const renderAccountBalanceInputs = () => {
+    return activeAccounts.map(account => (
+      <div className="form-row" key={account.id}>
+        <div className="form-group">
+          <label htmlFor={account.id}>{account.label}</label>
+          <div className="input-prefix">
+            <span>$</span>
+            <input
+              type="number"
+              id={account.id}
+              value={account.value}
+              onChange={(e) => handleAccountChange(account.id, e.target.value)}
+              min="0"
+              step="0.01"
+            />
+          </div>
+        </div>
+      </div>
+    ));
   };
 
   return (
@@ -187,26 +240,7 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       <div className="account-selector">
         <h3>Select Accounts to Include</h3>
         <div className="account-checkboxes">
-          {accounts.map(account => (
-            <div key={account.id} className="account-toggle">
-              <input
-                type="checkbox"
-                id={`toggle-${account.id}`}
-                checked={account.active}
-                onChange={() => toggleAccount(account.id)}
-              />
-              <label htmlFor={`toggle-${account.id}`}>{account.label}</label>
-              {account.custom && (
-                <button 
-                  type="button" 
-                  className="remove-account-btn" 
-                  onClick={() => removeAccount(account.id)}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
+          {renderAccountCheckboxes()}
         </div>
       </div>
       
@@ -216,11 +250,13 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
           placeholder="Enter new account name"
           value={newAccountName}
           onChange={(e) => setNewAccountName(e.target.value)}
+          aria-label="New account name"
         />
         <button 
           type="button" 
           className="add-account-btn"
           onClick={addNewAccount}
+          disabled={!newAccountName.trim()}
         >
           Add Account
         </button>
@@ -229,34 +265,13 @@ const AccountBalanceForm = ({ setAcctBalanceData, initialData }) => {
       <form onSubmit={handleSubmit}>
         <div className="form-section">
           <h3>Account Balances</h3>
-          
-          {accounts
-            .filter(account => account.active)
-            .map(account => (
-              <div className="form-row" key={account.id}>
-                <div className="form-group">
-                  <label htmlFor={account.id}>{account.label}</label>
-                  <div className="input-prefix">
-                    <span>$</span>
-                    <input
-                      type="number"
-                      id={account.id}
-                      value={account.value}
-                      onChange={(e) => handleAccountChange(account.id, e.target.value)}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))
-          }
+          {renderAccountBalanceInputs()}
         </div>
 
         <div className="total-section">
           <h3>Total Balance</h3>
           <p className="total-amount">
-            ${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatCurrency(totalBalance)}
           </p>
         </div>
 

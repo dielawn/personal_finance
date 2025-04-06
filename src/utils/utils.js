@@ -32,30 +32,30 @@ const getPayIntervalMultipliers = (payInterval) => {
   };
 
   function handlePayInterval(pay, payInterval) {
-    let weeklyPay, biWeeklyPay, monthlyPay, annualPay;
+    let weekly, biWeekly, monthly, annual;
     switch(payInterval) {
         case 'weekly':
-          weeklyPay = pay;
-          biWeeklyPay = pay * 2;
-          monthlyPay = pay * 4.33; // Average weeks in a month
-          annualPay = pay * 52;
+          weekly = pay;
+          biWeekly = pay * 2;
+          monthly = pay * 4.33; // Average weeks in a month
+          annual = pay * 52;
           break;
         case 'bi-weekly':
-          weeklyPay = (pay / 2);
-          biWeeklyPay = pay;
-          monthlyPay = pay * 2.17; // Average bi-weekly periods in a month
-          annualPay = pay * 26;
+          weekly = (pay / 2);
+          biWeekly = pay;
+          monthly = pay * 2.17; // Average bi-weekly periods in a month
+          annual = pay * 26;
           break;
         case 'monthly':
-          weeklyPay = pay / 4.33;
-          biWeeklyPay = pay / 2.165;
-          monthlyPay = pay;
-          annualPay = pay * 12;
+          weekly = pay / 4.33;
+          biWeekly = pay / 2.165;
+          monthly = pay;
+          annual = pay * 12;
           break;
         default:
           return null;
       }
-      return {weeklyPay, biWeeklyPay, monthlyPay, annualPay}
+      return {weekly, biWeekly, monthly, annual}
 }
 
 const formatCurrency = (amount) => {

@@ -66,38 +66,38 @@ const PayStubSummary = ({ payStubData }) => {
             <div className="card">
             <div className="pay-row">
                 <span>Weekly Gross Pay:</span>
-                <span className="pay-amount">{formatCurrency(grossPayInterval.weeklyPay)}</span>
+                <span className="pay-amount">{formatCurrency(grossPayInterval.weekly)}</span>
             </div>
             <div className="pay-row">
                 <span>Bi-Weekly Gross Pay:</span>
-                <span className="pay-amount">{formatCurrency(grossPayInterval.biWeeklyPay)}</span>
+                <span className="pay-amount">{formatCurrency(grossPayInterval.biWeekly)}</span>
             </div>
             <div className="pay-row">
                 <span>Monthly Gross Pay:</span>
-                <span className="pay-amount">{formatCurrency(grossPayInterval.monthlyPay)}</span>
+                <span className="pay-amount">{formatCurrency(grossPayInterval.monthly)}</span>
             </div>
             <div className="pay-row">
                 <span>Annual Gross Pay:</span>
-                <span className="pay-amount">{formatCurrency(grossPayInterval.annualPay)}</span>
+                <span className="pay-amount">{formatCurrency(grossPayInterval.annual)}</span>
             </div>       
             </div>
 
             <div className="card">
             <div className="pay-row">
                 <span>Weekly Net Pay:</span>
-                <span className="pay-amount">{formatCurrency(netPayInterval.weeklyPay)}</span>
+                <span className="pay-amount">{formatCurrency(netPayInterval.weekly)}</span>
             </div>
             <div className="pay-row">
                 <span>Bi-Weekly Net Pay:</span>
-                <span className="pay-amount">{formatCurrency(netPayInterval.biWeeklyPay)}</span>
+                <span className="pay-amount">{formatCurrency(netPayInterval.biWeekly)}</span>
             </div>
             <div className="pay-row">
                 <span>Monthly Net Pay:</span>
-                <span className="pay-amount">{formatCurrency(netPayInterval.monthlyPay)}</span>
+                <span className="pay-amount">{formatCurrency(netPayInterval.monthly)}</span>
             </div>
             <div className="pay-row">
                 <span>Annual Net Pay:</span>
-                <span className="pay-amount">{formatCurrency(netPayInterval.annualPay)}</span>
+                <span className="pay-amount">{formatCurrency(netPayInterval.annual)}</span>
             </div>   
             </div>
                  

@@ -1,192 +1,180 @@
-import { useEffect, useState } from 'react';
 import './Summary.css'
 import { handlePayInterval, formatCurrency, formatPercent } from './utils/utils';
-import { getPayIntervalMultipliers } from './utils/utils';
 import ProjectGrowth from './ProjectGrowth';
+import { useEffect, useState } from 'react';
+import MultiProjectGrowth from './MultiGrowth';
 
 const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) => {
-    const [preTaxRateGoal, setPreTaxRateGoal] = useState(false);
-    const [postTaxRateGoal, setPostTaxRateGoal] = useState(false);
-
-    // Multipliers for different time periods
-    const payInterval = payStubData[0].payInterval;
-    const multipliers = getPayIntervalMultipliers(payInterval)
+    const [allAccts, setAllAccts] = useState([]);
+    const { payInterval, retirement401k, match401k, hsa, grossPay, netPay } = payStubData[0]
     
-    //Pre tax accounts    
-    const _401kCont = handlePayInterval(payStubData[0].retirement401k, payInterval);
-    const _401kMatch = handlePayInterval(payStubData[0].match401k, payInterval);
-    const hsaCont = handlePayInterval(payStubData[0].hsa, payInterval);
+    // Pre tax accounts    
+    const _401kContInterval = handlePayInterval(retirement401k, payInterval);
+    const _401kMatch = handlePayInterval(match401k, payInterval);
+    const hsaContInterval = handlePayInterval(hsa, payInterval);
     
-    //Post tax accounts
-    const iraContribution = handlePayInterval(postTaxContributions?.accounts[1]?.amount, payInterval);
-    const savingsAcctContribution = handlePayInterval(postTaxContributions?.accounts[0]?.amount, payInterval);
+    // Post tax accounts
+    const iraContInterval = handlePayInterval(postTaxContributions?.accounts[1]?.amount || 0, payInterval);
+    const savingsAcctContInterval = handlePayInterval(postTaxContributions?.accounts[0]?.amount || 0, payInterval);
     
-    const totalSavings = _401kCont.annualPay + hsaCont.annualPay + iraContribution.annualPay + savingsAcctContribution.annualPay
+    const totalSavings = _401kContInterval.annual + hsaContInterval.annual + iraContInterval.annual + savingsAcctContInterval.annual
           
-    const grossPay = handlePayInterval(payStubData[0]?.grossPay, payInterval) || 0;  
-    const netPay = handlePayInterval(payStubData[0]?.netPay, payInterval) || 0;
+    const grossPayInterval = handlePayInterval(grossPay, payInterval) || 0;  
+    const netPayInterval = handlePayInterval(netPay, payInterval) || 0;
     
     // Savings Rate calculations
-    const preTaxSavingsRate = (totalSavings / grossPay.annualPay * 100 || 0);
-    const postTaxSavingsRate = (totalSavings / netPay.annualPay) * 100 || 0;
- 
-    // Create a modified accounts array without mutating the original data
-    const enhancedAccounts = [...acctBalanceData.accountsList].map((account, index) => {
-        // Create a deep copy of the account to avoid mutating props
-        const enhancedAccount = {...account};
-        
-        // Add savings account contribution (assuming index 0 is savings account)
-        if (index === 1) {
-            enhancedAccount.contribution = {
-                monthlyPay: savingsAcctContribution.monthlyPay,
-                annualPay: savingsAcctContribution.annualPay
-            };
-            // Add an empty match property with zero values
-            enhancedAccount.match = {
-                monthlyPay: 0,
-                annualPay: 0
-            };
-        }
-        
-        // Add IRA contribution 
-        if (index === 2) {
-            enhancedAccount.contribution = {
-                monthlyPay: iraContribution.monthlyPay,
-                annualPay: iraContribution.annualPay
-            };
-            // Add an empty match property with zero values
-            enhancedAccount.match = {
-                monthlyPay: 0,
-                annualPay: 0
-            };
-        }
-        
-        // Add HSA contribution
-        if (index === 3) {
-            enhancedAccount.contribution = hsaCont;
-            // Add an empty match property with zero values to HSA
-            enhancedAccount.match = {
-                monthlyPay: 0,
-                annualPay: 0
-            };
-        }
-        
-        // Add 401k contributions
-        if (index === 4) {
-            enhancedAccount.match = _401kMatch;
-            enhancedAccount.contribution = _401kCont;
-        }
-        
-        return enhancedAccount;
-    });
+    const preTaxSavingsRate = (totalSavings / grossPayInterval.annual) * 100 || 0;
+    const postTaxSavingsRate = (totalSavings / netPayInterval.annual) * 100 || 0;
 
-    function checkGoals(savingsRate, setter) {
+    // Account type map to identify accounts by ID or label
+    const accountTypeMap = {
+        '401k': { label: '401(k)', contInterval: _401kContInterval, match: _401kMatch },
+        '401(k)': { label: '401(k)', contInterval: _401kContInterval, match: _401kMatch },
+        'ira': { label: 'IRA', contInterval: iraContInterval, match: null },
+        'hsa': { label: 'HSA', contInterval: hsaContInterval, match: null },
+        'savings': { label: 'Savings Account', contInterval: savingsAcctContInterval, match: null },
+        'checking': { label: 'Checking Account', contInterval: null, match: null }
+    };
 
-        // Goal pre tax savings rate >= 20%
-        if (savingsRate >= 20) {
-            //Goal met
-            setter(true);
-        } else {
-            setter(false)
+    useEffect(() => {
+        // Process accounts from accountsList
+        if (acctBalanceData?.accountsList?.length > 0) {
+            const processedAccounts = buildAccountObjects(acctBalanceData.accountsList);
+            console.log('Processed accounts:', processedAccounts);
+            setAllAccts(processedAccounts);
         }
+    }, [acctBalanceData]);
 
-
+    // Function to build account objects based on the accounts in accountsList
+    function buildAccountObjects(accountsList) {
+        return accountsList.map(account => {
+            // Normalize account id to lowercase for matching
+            const accountType = account.id.toLowerCase();
+            const accountLabel = account.label;
+            
+            // Try to find matching account type in our map
+            let matchedType = null;
+            
+            // First try matching by ID
+            if (accountTypeMap[accountType]) {
+                matchedType = accountTypeMap[accountType];
+            } 
+            // Then try partial matching of the label
+            else {
+                for (const [key, value] of Object.entries(accountTypeMap)) {
+                    if (accountLabel.toLowerCase().includes(key.toLowerCase())) {
+                        matchedType = value;
+                        break;
+                    }
+                }
+            }
+            
+            // Default values for years and growth rate
+            const defaultYears = 30;
+            const defaultGrowthRate = 7;
+            
+            // If no match found, create a generic account object
+            if (!matchedType) {
+                return {
+                    id: account.id,
+                    acctName: account.label,
+                    initialBalance: account.value || 0,
+                    annualContribution: 0,
+                    years: defaultYears,
+                    growthRate: defaultGrowthRate,
+                    contribution: null,
+                    match: null
+                };
+            }
+            
+            // Create account object with appropriate contribution intervals
+            // and include the specific properties needed for MultiProjectGrowth
+            const annualContribution = matchedType.contInterval ? 
+                matchedType.contInterval.annual + (matchedType.match ? matchedType.match.annual : 0) : 0;
+                
+            return {
+                id: account.id,
+                acctName: account.label,
+                label: account.label,
+                initialBalance: account.value || 0,
+                annualContribution: annualContribution,
+                years: defaultYears,
+                growthRate: defaultGrowthRate,
+                contribution: matchedType.contInterval,
+                match: matchedType.match
+            };
+        });
     }
-
-    useEffect(() => {
-        checkGoals(preTaxSavingsRate, setPreTaxRateGoal)
-        checkGoals(postTaxSavingsRate, setPostTaxRateGoal)
-    })
-
-    useEffect(() => {
-        console.log('accts', acctBalanceData);
-        console.log('enhanced accounts', enhancedAccounts);
-        console.log('HSA cont', hsaCont);
-        console.log('Post-tax contributions', postTaxContributions);
-        console.log('IRA contribution', {
-            monthly: iraContribution.monthlyPay,
-            annual: iraContribution.annualPay
-        });
-        console.log('Savings account contribution', {
-            monthly: savingsAcctContribution.monthlyPay,
-            annual: savingsAcctContribution.annualPay
-        });
-        
-       console.log('gross net', grossPay, netPay)
-    }, [acctBalanceData, postTaxContributions]);
 
     return (
         <div className="summary-section">
             <h3>Account Balances</h3>
         
             <div className="accounts-list">
-                {enhancedAccounts.map(account => (
+                {allAccts.map(account => (
                     <div key={account.id} className="card">
                         <p className="account-row">
                             <span className='acct-label'>{account.label} Balance:</span> 
-                            <span className='summary-value'>{formatCurrency(account.value)}</span>
+                            <span className='summary-value'>{formatCurrency(account.initialBalance)}</span>
                         </p>
                         <div className='flexColumn'>
                    
                         {/* Show contributions if either match or contribution exists */}
                         {account.contribution && (
                             <>
-
                              <div className="flex acct-card">
-                             <div className="monthly card flex">
-                                <h5 className='acct-label'>Monthly</h5>
-                                <p className="account-row">
-                                    <span className='sub-acct'>Contributions:</span>
-                                    <span className='sub-acct-value'>{formatCurrency(account.contribution.monthlyPay)}</span>
-                                </p>
-                                {account.match && account.match.monthlyPay > 0 && (
+                                <div className="monthly card flex">
+                                    <h5 className='acct-label'>Monthly</h5>
                                     <p className="account-row">
-                                        <span className='sub-acct'>Employer Match:</span>
-                                        <span className='sub-acct-value'>{formatCurrency(account.match.monthlyPay)}</span>
+                                        <span className='sub-acct'>Contributions:</span>
+                                        <span className='sub-acct-value'>{formatCurrency(account.contribution.monthly)}</span>
                                     </p>
-                                )}
-                                <p className="account-row">
-                                    <span className='sub-acct'>Total:</span>
-                                    <span className='sub-acct-value'>
-                                        {formatCurrency(
-                                            account.contribution.monthlyPay + 
-                                            (account.match ? account.match.monthlyPay : 0)
-                                        )}
-                                    </span>
-                                </p>
-                            </div>
+                                    {account.match && account.match.monthly > 0 && (
+                                        <p className="account-row">
+                                            <span className='sub-acct'>Employer Match:</span>
+                                            <span className='sub-acct-value'>{formatCurrency(account.match.monthly)}</span>
+                                        </p>
+                                    )}
+                                    <p className="account-row">
+                                        <span className='sub-acct'>Total:</span>
+                                        <span className='sub-acct-value'>
+                                            {formatCurrency(
+                                                account.contribution.monthly + 
+                                                (account.match ? account.match.monthly : 0)
+                                            )}
+                                        </span>
+                                    </p>
+                                </div>
 
-                            <div className="annual card flex">
-                                <h5 className='acct-label'>Annual</h5>
-                                <p className="account-row">
-                                    <span className='sub-acct'>Contributions:</span>
-                                    <span className='sub-acct-value'>{formatCurrency(account.contribution.annualPay)}</span>
-                                </p>
-                                {account.match && account.match.annualPay > 0 && (
+                                <div className="annual card flex">
+                                    <h5 className='acct-label'>Annual</h5>
                                     <p className="account-row">
-                                        <span className='sub-acct'>Employer Match:</span>
-                                        <span className='sub-acct-value'>{formatCurrency(account.match.annualPay)}</span>
+                                        <span className='sub-acct'>Contributions:</span>
+                                        <span className='sub-acct-value'>{formatCurrency(account.contribution.annual)}</span>
                                     </p>
-                                )}
-                                <p className="account-row">
-                                    <span className='sub-acct'>Total:</span>
-                                    <span className='sub-acct-value'>
-                                        {formatCurrency(
-                                            account.contribution.annualPay + 
-                                            (account.match ? account.match.annualPay : 0)
-                                        )}
-                                    </span>
-                                    
-                                </p>
-                                
-                            </div>
+                                    {account.match && account.match.annual > 0 && (
+                                        <p className="account-row">
+                                            <span className='sub-acct'>Employer Match:</span>
+                                            <span className='sub-acct-value'>{formatCurrency(account.match.annual)}</span>
+                                        </p>
+                                    )}
+                                    <p className="account-row">
+                                        <span className='sub-acct'>Total:</span>
+                                        <span className='sub-acct-value'>
+                                            {formatCurrency(
+                                                account.contribution.annual + 
+                                                (account.match ? account.match.annual : 0)
+                                            )}
+                                        </span>
+                                    </p>
+                                </div>
                              </div>
                             
                             <ProjectGrowth 
-                                        acctName={account.label}
-                                        initialBalance={account.value} 
-                                        annualContribution={account.contribution.annualPay}
-                                    />
+                                acctName={account.label}
+                                initialBalance={account.initialBalance} 
+                                annualContribution={account.contribution.annual}
+                            />
                             </>
                         )}
                         </div>
@@ -194,31 +182,30 @@ const AccountsSummary = ({acctBalanceData, payStubData, postTaxContributions}) =
                 ))}
             </div>
             
-            
-            
             {/* Optional: Display Savings Rates */}
            <div className="flexColumn">
-           <div className="savings-rates card">
-                <h4>Savings Rates</h4>
-               
+                <div className="savings-rates card">
+                    <h4>Savings Rates</h4>
+                    
                     <p>Good advice save at least 10% of your pre tax income</p>
                     <p>Wealth goal? Save 20% or more of your pre tax income</p>
 
-                
-                <p className="account-row">
-                    <span>Pre-Tax Savings Rate:</span>
-                    <span>{formatPercent(preTaxSavingsRate)}{preTaxRateGoal?' ✅':' ❌'}</span>
-                </p>
-                <p className="account-row">
-                    <span>Post-Tax Savings Rate:</span>
-                    <span>{formatPercent(postTaxSavingsRate)}{postTaxRateGoal?' ✅':' ❌'}</span>
-                </p>
-                <p className="account-row">
-                <span>Total Assets:</span>
-                <span>{formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
-            </p>
-            </div>
-            <ProjectGrowth acctName={'All Account Balances'} initialBalance={acctBalanceData.totalAssets} annualContribution={totalSavings}/>
+                    <p className="account-row">
+                        <span>Pre-Tax Savings Rate:</span>
+                        <span>{formatPercent(preTaxSavingsRate)}</span>
+                    </p>
+                    <p className="account-row">
+                        <span>Post-Tax Savings Rate:</span>
+                        <span>{formatPercent(postTaxSavingsRate)}</span>
+                    </p>
+                    <p className="account-row">
+                        <span>Total Assets:</span>
+                        <span>{formatCurrency(acctBalanceData.totalAssets || 0)}</span>              
+                    </p>
+                </div>
+                <MultiProjectGrowth 
+                    acctsArray={allAccts}                    
+                />
            </div>
         </div>
     );

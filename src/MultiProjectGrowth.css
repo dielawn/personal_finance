@@ -1,0 +1,97 @@
+.account-controls {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  
+}
+
+.input-group {
+  max-width: 100px;
+}
+
+.account-controls > h3 {
+  font-size: 15px;
+  padding-top: 20px;
+}
+
+.multi-account-stats{
+  justify-content: space-between;
+  min-width: 500px;
+  display: flex;
+  align-items: center;
+}
+
+.multi-stat-item {
+  font-size: 15px;
+}
+.highlight {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+}
+
+.highlight span:last-child {
+  color: #0066cc;
+}
+
+/* Add these styles to your MultiProjectGrowth.css file */
+
+.calculator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.calculator-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.years-control {
+  background: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 300px;
+}
+
+.years-control label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.years-input {
+  width: 50px;
+  padding: 0.25rem;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.years-slider {
+  flex: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .calculator-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .years-control {
+    width: 100%;
+  }
+}

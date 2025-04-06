@@ -36,10 +36,10 @@ const PieChart = ({ title, income, color, expenses }) => {
     
     setPieData(processedData);
     
-    console.log('Income:', income);
-    console.log('Total Expenses:', totalExpenses);
-    console.log('Remaining Income:', remainingIncome);
-    console.log('Pie Data:', processedData);
+    // console.log('Income:', income);
+    // console.log('Total Expenses:', totalExpenses);
+    // console.log('Remaining Income:', remainingIncome);
+    // console.log('Pie Data:', processedData);
   }, [income, expenses]);
   
   // Convert polar coordinates to cartesian
