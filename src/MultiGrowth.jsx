@@ -14,7 +14,7 @@ const MultiProjectGrowth = ({ acctsArray }) => {
   const colors = 
   // Initialize accounts from props
   useEffect(() => {
-    console.log('acctsArray received:', acctsArray);
+    // console.log('acctsArray received:', acctsArray);
     if (acctsArray && acctsArray.length > 0) {
       // Make a deep copy and ensure required properties
       const processedAccounts = acctsArray.map(acct => ({
@@ -85,7 +85,7 @@ const MultiProjectGrowth = ({ acctsArray }) => {
       data.push(yearData);
     }
     
-    console.log('Generated projection data:', data);
+    // console.log('Generated projection data:', data);
     return data;
   };
   

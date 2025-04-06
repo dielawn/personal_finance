@@ -20,10 +20,6 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
     const monthlyTaxes = payStubData[0].totalDeductions - (retirement401k + hsa)
     
     const monthlyHealthInsurance = (healthInsurance + dentalInsurance + visionInsurance) * multipliers.monthly
-    const wants = monthlyRecurringExp + personalDebtPaymentTotal + personalExpenses.diningOut + personalExpenses.entertainment;
-    const needs = housingExpenses.totalMonthlyExpenses + personalExpenses.groceries + personalExpenses.clothing + totalDebtPayment;
-    const monthlySavings = hsa * multipliers.monthly + match401k * multipliers.monthly + retirement401k * multipliers.monthly + postTaxContributions.total_contributions;
-    const monthlyTransport = transportExpenses.totalMonthlyExpenses
     
     const colors = ['#F2F4CB', '#A5D0A8','#96BD99', '#99BFA8', '#8CADA7', '#64520F', '#B7990D', '#D5C76C', ]
     const wantsExp = [
@@ -143,6 +139,7 @@ const CashFlowSummary = ({ payStubData, recurringExpenses, debtList, housingExpe
     ]
 
     useEffect(() => {
+        console.log('sub/recur', recurringExpenses)
         // Process the accounts from postTaxContributions
         if (postTaxContributions && postTaxContributions.accounts) {
             setSavingsAccts(handleAccts(postTaxContributions.accounts));

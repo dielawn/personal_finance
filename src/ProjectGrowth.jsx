@@ -17,13 +17,7 @@ const ProjectGrowth = ({ acctName, initialBalance, annualContribution }) => {
   
     // Calculate compound growth projection
     const calculateProjection = () => {
-      console.log('Calculating projection with:', {
-        years,
-        initialBalance,
-        annualContribution,
-        growthRate
-      });
-  
+        
       const data = [];
       let balance = initialBalance;
       let totalContributions = initialBalance;
@@ -55,7 +49,7 @@ const ProjectGrowth = ({ acctName, initialBalance, annualContribution }) => {
           contributions: totalContributions
         });
         
-        console.log(`Year ${year}: Balance $${balance.toLocaleString()}, Contributions $${totalContributions.toLocaleString()}`);
+        
       }
   
       setProjectionData(data);
