@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import useLocalStorage from './hooks/useLocalStorage';
 import ExportButtons from './ExportButtons';
 // Forms
+import PersonalDataForm from './PersonalData.jsx';
 import PayStub from './PayStub';
 import AccountBalanceForm from './AccountBalanceForm';
 import DebtTrackerForm from './DebtTrackerForm';
@@ -21,6 +22,7 @@ import RecurringSummary from './RecurringSum.jsx';
 import CashFlowSummary from './CashFlowSum.jsx';
 
 const FinanceNavigation = () => {
+  const [ personalData, setPersonalData ] = useLocalStorage('personal_data', null) 
   // State for all the financial data with useLocalStorage integration
   const [payStubData, setPayStubData] = useLocalStorage('finance_paystub_data', []);
   const [showAddSpouse, setShowAddSpouse] = useLocalStorage('finance_show_spouse', false);
@@ -30,6 +32,7 @@ const FinanceNavigation = () => {
     preTaxSavings: 0
   });
   // Forms Data
+
   const [acctBalanceData, setAcctBalanceData] = useLocalStorage('finance_acct_balance', null);
   const [debtList, setDebtList] = useLocalStorage('finance_debt_list', []);
   const [housingExpenses, setHousingExpenses] = useLocalStorage('finance_housing_expenses', null);
@@ -206,7 +209,8 @@ const FinanceNavigation = () => {
         <li>Savings Contributions</li>
       </ul>
       <p>Each section builds on the previous one to create a comprehensive financial overview.</p>
-      <p><strong>Your progress will be automatically saved</strong> as you move through the questionnaire.</p>
+      <p><strong>Your progress will be automatically saved to your browsers local storage</strong> as you move through the questionnaire.</p>
+      <p>No Data Collection</p>
     </div>
   ), []);
 
@@ -273,6 +277,15 @@ const FinanceNavigation = () => {
       title: 'Welcome',
       description: 'Complete this questionnaire to get a clear picture of your financial situation',
       component: welcomeScreenComponent
+    },
+    {
+      id: 'personal',
+      title: 'Personal',
+      description: 'Age and Retirement Age Goal',
+      component: <PersonalDataForm 
+        setPersonalData={setPersonalData}
+        initialData={personalData}
+      />
     },
     {
       id: 'income',
@@ -497,7 +510,7 @@ const FinanceNavigation = () => {
         <ul>
           {steps.map((step, index) => (
             <li
-              key={step.id}
+              key={index}
               className={`step-indicator ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
               onClick={() => goToStep(index)}
             >
