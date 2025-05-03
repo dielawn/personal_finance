@@ -4,6 +4,7 @@ import useLocalStorage from './hooks/useLocalStorage';
 import ExportButtons from './ExportButtons';
 // Forms
 import PersonalDataForm from './PersonalData.jsx';
+import MoneyScripts from './MoneyScripts.jsx';
 import PayStub from './PayStub';
 import AccountBalanceForm from './AccountBalanceForm';
 import DebtTrackerForm from './DebtTrackerForm';
@@ -20,6 +21,7 @@ import HousingSummary from './HousingSum.jsx';
 import TransportSummary from './TransportSum.jsx';
 import RecurringSummary from './RecurringSum.jsx';
 import CashFlowSummary from './CashFlowSum.jsx';
+import ResetButton from './ResetButton.jsx';
 
 const FinanceNavigation = () => {
   const [ personalData, setPersonalData ] = useLocalStorage('personal_data', null) 
@@ -32,7 +34,7 @@ const FinanceNavigation = () => {
     preTaxSavings: 0
   });
   // Forms Data
-
+  const [goalData, setGoalData] = useLocalStorage('finance_scripts_goals', null);
   const [acctBalanceData, setAcctBalanceData] = useLocalStorage('finance_acct_balance', null);
   const [debtList, setDebtList] = useLocalStorage('finance_debt_list', []);
   const [housingExpenses, setHousingExpenses] = useLocalStorage('finance_housing_expenses', null);
@@ -40,6 +42,9 @@ const FinanceNavigation = () => {
   const [personalExpenses, setPersonalExpenses] = useLocalStorage('finance_personal_expenses', null);
   const [recurringExpenses, setRecurringExpenses] = useLocalStorage('finance_recurring_expenses', null);
   const [postTaxContributions, setPostTaxContributions] = useLocalStorage('finance_post_tax_contributions', null);
+
+  //Localstorage
+  // const [currentStep, setCurrentStep, clearCurrentStep, clearAllStorage] = useLocalStorage('finance_current_step', 0);
 
   // Navigation state
   const [currentStep, setCurrentStep] = useLocalStorage('finance_current_step', 0);
@@ -288,6 +293,15 @@ const FinanceNavigation = () => {
       />
     },
     {
+      id: 'goals',
+      title: 'Goals & Scripts',
+      description: 'Our Money Scripts & Setting Goals',
+      component: <MoneyScripts 
+        setGoalData={setGoalData}
+        initialData={goalData}
+      />
+    },
+    {
       id: 'income',
       title: 'Income',
       description: 'Enter your income details from your pay stub',
@@ -295,7 +309,7 @@ const FinanceNavigation = () => {
     },
     {
       id: 'accounts',
-      title: 'Accounts',
+      title: 'Acct Balances',
       description: 'Track your account balances',
       component: <AccountBalanceForm 
         setAcctBalanceData={handleAcctBalanceUpdate}
@@ -476,13 +490,93 @@ const FinanceNavigation = () => {
     }
   }, [payStubData, setSummary]);
 
-  // Navigate to next step
-  const nextStep = useCallback(() => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo(0, 0);
+// Add this function to check if data needed for a specific step is available
+const isStepDataAvailable = (stepIndex) => {
+  // Only perform validation for steps that require previous data
+  // Summary page is step index 10
+  if (stepIndex === 10) {
+    // Check if basic required data is available
+    if (!payStubData || payStubData.length === 0) {
+      return { valid: false, message: "Please complete the Income section before viewing the summary." };
     }
-  }, [currentStep, steps.length, setCurrentStep]);
+    
+    // Check additional required data
+    if (!acctBalanceData) {
+      return { valid: false, message: "Please complete the Accounts section before viewing the summary." };
+    }
+    
+    if (!housingExpenses) {
+      return { valid: false, message: "Please complete the Housing section before viewing the summary." };
+    }
+    
+    if (!transportExpenses) {
+      return { valid: false, message: "Please complete the Transport section before viewing the summary." };
+    }
+    
+    if (!debtList || debtList.length === 0) {
+      return { valid: false, message: "Please complete the Debts section before viewing the summary." };
+    }
+    
+    if (!personalExpenses) {
+      return { valid: false, message: "Please complete the Personal Expenses section before viewing the summary." };
+    }
+    
+    if (!recurringExpenses) {
+      return { valid: false, message: "Please complete the Recurring Expenses section before viewing the summary." };
+    }
+    
+    if (!postTaxContributions) {
+      return { valid: false, message: "Please complete the Contributions section before viewing the summary." };
+    }
+  }
+  
+  // Default - data is valid
+  return { valid: true };
+};
+
+// Add state for validation messages
+const [validationMessage, setValidationMessage] = useState(null);
+
+// Modify nextStep to include validation
+const nextStep = useCallback(() => {
+  if (currentStep < steps.length - 1) {
+    const nextStepIndex = currentStep + 1;
+    const { valid, message } = isStepDataAvailable(nextStepIndex);
+    
+    if (valid) {
+      setValidationMessage(null);
+      setCurrentStep(nextStepIndex);
+      window.scrollTo(0, 0);
+    } else {
+      setValidationMessage(message);
+      // Optionally, show the message in a more visible way (toast, alert, etc.)
+      console.log("Navigation blocked:", message);
+    }
+  }
+}, [currentStep, steps.length, setCurrentStep, payStubData, acctBalanceData, 
+    housingExpenses, transportExpenses, debtList, personalExpenses, 
+    recurringExpenses, postTaxContributions]);
+
+// Modify goToStep to include validation
+const goToStep = useCallback((index) => {
+  if (index >= 0 && index < steps.length) {
+    const { valid, message } = isStepDataAvailable(index);
+    
+    if (valid) {
+      setValidationMessage(null);
+      setCurrentStep(index);
+      window.scrollTo(0, 0);
+    } else {
+      setValidationMessage(message);
+      // Optionally, show the message in a more visible way (toast, alert, etc.)
+      console.log("Navigation blocked:", message);
+    }
+  }
+}, [steps.length, setCurrentStep, payStubData, acctBalanceData, 
+    housingExpenses, transportExpenses, debtList, personalExpenses, 
+    recurringExpenses, postTaxContributions]);
+
+// prevStep function doesn't need validation since we're going backwards
 
   // Navigate to previous step
   const prevStep = useCallback(() => {
@@ -492,13 +586,6 @@ const FinanceNavigation = () => {
     }
   }, [currentStep, setCurrentStep]);
 
-  // Jump to a specific step
-  const goToStep = useCallback((index) => {
-    if (index >= 0 && index < steps.length) {
-      setCurrentStep(index);
-      window.scrollTo(0, 0);
-    }
-  }, [steps.length, setCurrentStep]);
 
   return (
     <div className="finance-navigation">
@@ -543,6 +630,11 @@ const FinanceNavigation = () => {
               Next
             </button>
           )}
+          {validationMessage && (
+            <div className="validation-message">
+              <p>{validationMessage}</p>
+            </div>
+          )}
         </div>
       </div>
       
@@ -553,6 +645,7 @@ const FinanceNavigation = () => {
             You can navigate using the buttons below or by clicking on the steps above
           </small>
         </p>
+        <ResetButton />
       </div>
     </div>
   );

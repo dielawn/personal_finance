@@ -429,3 +429,12 @@
   background-color: red;
 }
 
+.validation-message {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  color: #856404;
+  text-align: center;
+}
